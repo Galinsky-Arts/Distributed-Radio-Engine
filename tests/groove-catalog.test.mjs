@@ -103,3 +103,35 @@ test('nonprivate files symlink files and unsupported schemas fail closed',t=>{
  assert.throws(()=>new RecordingChannelRegistry(path),/Unsupported/);
 });
 
+
+test('durable publication revisions survive restart and withdrawals',t=>{
+ const dir=mkdtempSync(join(tmpdir(),'groove-durable-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,'channels.sqlite');
+ let registry=new RecordingChannelRegistry(path);
+ let c=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true});
+ assert.equal(c.put(a).revision,1);assert.equal(c.put(a).revision,1);
+ assert.equal(c.remove('bonus'),true);assert.equal(c.remove('bonus'),false);
+ registry.close();
+ registry=new RecordingChannelRegistry(path);
+ c=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true});
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus'}).active,false);
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus'}).revision,2);
+ assert.equal(c.put(a).revision,3);
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus'}).active,true);
+ assert.throws(()=>c.put({...a,recordingId:'takeB'}),/reassign/);
+ registry.close();
+});
+test('publication/withdrawal require creator authority and isolate scope',t=>{
+ const {registry,catalog:c}=setup(t,operation=>operation.action==='publish');
+ assert.equal(c.put(a).active,true);
+ assert.throws(()=>c.remove('bonus'),/authorization denied/);
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus'}).active,true);
+ assert.equal(registry.getGroove({...scope,applicationId:'other',grooveId:'bonus'}),null);
+});
+test('registry will not publish without the matching reserved recording identity',t=>{
+ const {registry}=setup(t);
+ assert.throws(()=>registry.publishGroove({...scope,grooveId:'bonus',recordingId:'takeA',creatorId:'artist'}),/reservation required/);
+ registry.reserve({tenantId:'tenant',applicationId:'app',recordingId:'takeA',creatorId:'artist',entryId:'bonus',channel:'groove'});
+ assert.throws(()=>registry.publishGroove({...scope,grooveId:'bonus',recordingId:'takeA',creatorId:'other'}),/reservation required/);
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus'}),null);
+});

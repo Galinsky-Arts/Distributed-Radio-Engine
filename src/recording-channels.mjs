@@ -27,6 +27,7 @@ export class RecordingChannelRegistry {
       if(db.prepare('SELECT version FROM radio_channel_schema WHERE id=1').get().version!==1)
         throw new Error('Unsupported recording-channel schema');
       db.exec("CREATE TABLE IF NOT EXISTS radio_recording_channels(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,recording_id TEXT NOT NULL,creator_id TEXT NOT NULL,channel TEXT NOT NULL CHECK(channel IN ('groove','points','paid')),entry_id TEXT NOT NULL,PRIMARY KEY(tenant_id,application_id,recording_id),UNIQUE(tenant_id,application_id,channel,entry_id)) STRICT");
+      db.exec("CREATE TABLE IF NOT EXISTS radio_groove_publications(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,groove_id TEXT NOT NULL,recording_id TEXT NOT NULL,creator_id TEXT NOT NULL,revision INTEGER NOT NULL CHECK(revision>=1),active INTEGER NOT NULL CHECK(active IN (0,1)),PRIMARY KEY(tenant_id,application_id,groove_id)) STRICT");
       db.exec('COMMIT');
     } catch(error){try{db.exec('ROLLBACK');}catch{}db.close();throw error;}
     this.#db=db;
@@ -56,6 +57,43 @@ export class RecordingChannelRegistry {
       .get(tenantId,applicationId,recordingId);
     return row?Object.freeze({tenantId:row.tenant_id,applicationId:row.application_id,recordingId:row.recording_id,
       creatorId:row.creator_id,channel:row.channel,entryId:row.entry_id}):null;
+  }
+  getGroove({tenantId,applicationId,grooveId}) {
+    for(const value of [tenantId,applicationId,grooveId])id(value,'Groove scope');
+    const row=this.#db.prepare('SELECT * FROM radio_groove_publications WHERE tenant_id=? AND application_id=? AND groove_id=?')
+      .get(tenantId,applicationId,grooveId);
+    return row?Object.freeze({tenantId:row.tenant_id,applicationId:row.application_id,
+      grooveId:row.groove_id,recordingId:row.recording_id,creatorId:row.creator_id,
+      revision:row.revision,active:row.active===1,channel:'groove',exclusive:true}):null;
+  }
+  publishGroove({tenantId,applicationId,grooveId,recordingId,creatorId}) {
+    for(const value of [tenantId,applicationId,grooveId,recordingId,creatorId])id(value,'Groove identity');
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const reserved=this.get({tenantId,applicationId,recordingId});
+      if(!reserved||reserved.channel!=='groove'||reserved.entryId!==grooveId||reserved.creatorId!==creatorId)
+        throw new RangeError('Groove channel reservation required');
+      const old=this.getGroove({tenantId,applicationId,grooveId});
+      if(old&&(old.recordingId!==recordingId||old.creatorId!==creatorId))
+        throw new RangeError('Cannot reassign permanent Groove identity');
+      if(!old) this.#db.prepare('INSERT INTO radio_groove_publications VALUES(?,?,?,?,?,1,1)')
+        .run(tenantId,applicationId,grooveId,recordingId,creatorId);
+      else if(!old.active) this.#db.prepare('UPDATE radio_groove_publications SET revision=revision+1,active=1 WHERE tenant_id=? AND application_id=? AND groove_id=?')
+        .run(tenantId,applicationId,grooveId);
+      const published=this.getGroove({tenantId,applicationId,grooveId});
+      this.#db.exec('COMMIT');return published;
+    } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+  }
+  withdrawGroove({tenantId,applicationId,grooveId,creatorId}) {
+    for(const value of [tenantId,applicationId,grooveId,creatorId])id(value,'Groove withdrawal');
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const old=this.getGroove({tenantId,applicationId,grooveId});
+      if(old&&old.creatorId!==creatorId)throw new RangeError('Creator identity mismatch');
+      if(old?.active)this.#db.prepare('UPDATE radio_groove_publications SET revision=revision+1,active=0 WHERE tenant_id=? AND application_id=? AND groove_id=?')
+        .run(tenantId,applicationId,grooveId);
+      this.#db.exec('COMMIT');return !!old?.active;
+    } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
   }
   close(){this.#db.close();}
 }

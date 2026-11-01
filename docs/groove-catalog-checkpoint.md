@@ -49,3 +49,14 @@ registry. Integrate the approved DRE-05 rights checks and later DRE-23 secure
 grant/delivery path. Test concurrency, restart, unauthorized access, withdrawal
 and existing entitlement continuity. Do not label this unit complete, invent a
 live grant, restore the old client-ID grant API or merge this partial checkpoint.
+
+## Durable active publication revisions
+
+A scoped SQLite publication table now records active/withdrawn state and
+monotonically increasing revision. Creator-authorized publication/withdrawal
+updates are transactional. Repeated publication of an already active Groove
+does not increase its revision; withdrawal preserves reservation/history and
+republication of the same immutable identity increments the revision. Fresh
+catalog instances reload authoritative state after restart, rather than relying
+on an in-memory map. Real issuer grants, rights and secure delivery remain
+unimplemented and the PR must remain draft.
