@@ -247,3 +247,21 @@ test('rights adapter rejects mismatched trusted asset, forged scope and async cr
  assert.equal(asyncAuth(operation,scope),false);
  await new Promise(resolve=>setImmediate(resolve));
 });
+
+test('entitlement reads use bounded stable cursor pages with authorized query parameters',t=>{
+ const {registry}=setup(t);
+ let seen;
+ const c=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true,
+   authorizeGrant:()=>true,authorizeRead:request=>{seen=request;return true;}});
+ for(const name of ['a','b','c']) {
+   c.put({grooveId:name,recordingId:'take'+name,creatorId:'artist',exclusive:true});
+   c.grant({grooveId:name,listenerId:'fan',grantId:name,proof:'fixture'});
+ }
+ const page=c.entitlements('fan',{proof:'fixture',limit:2});
+ assert.deepEqual(page.map(x=>x.grantId),['a','b']);
+ assert.equal(seen.limit,2);
+ assert.deepEqual(c.entitlements('fan',{proof:'fixture',limit:2,afterGrantId:'b'}).map(x=>x.grantId),['c']);
+ assert.equal(seen.afterGrantId,'b');
+ for(const limit of [0,101,1.5])assert.throws(()=>c.entitlements('fan',{proof:'fixture',limit}),/pagination/);
+ assert.throws(()=>registry.readGrooveEntitlements({...scope,listenerId:'fan',limit:101}),/limit/);
+});

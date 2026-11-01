@@ -54,13 +54,16 @@ export class GrooveCatalog {
     if(result!==true)throw new TypeError('Creator withdrawal authorization denied');
     return this.#registry.withdrawGroove({...this.#scope,grooveId,creatorId:item.creatorId,expectedRevision:item.revision});
   }
-  entitlements(listenerId,{proof}={}) {
+  entitlements(listenerId,{proof,limit=100,afterGrantId=null}={}) {
     if(typeof listenerId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(listenerId))
       throw new TypeError('Stable listener identity required');
     if(typeof proof!=='string'||!proof.length||proof.length>8192)
       throw new TypeError('Bounded entitlement authorization required');
     if(typeof this.#authorizeRead!=='function')throw new TypeError('Authenticated entitlement reader required');
-    const request=Object.freeze({action:'entitlements',listenerId,proof});
+    if(!Number.isSafeInteger(limit)||limit<1||limit>100||
+       (afterGrantId!==null&&(typeof afterGrantId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(afterGrantId))))
+      throw new RangeError('Invalid entitlement pagination');
+    const request=Object.freeze({action:'entitlements',listenerId,proof,limit,afterGrantId});
     let authorized;
     try {authorized=this.#authorizeRead(request,this.#scope);}
     catch {throw new TypeError('Entitlement read authorization denied');}
@@ -68,7 +71,7 @@ export class GrooveCatalog {
       Promise.resolve(authorized).catch(()=>{});throw new TypeError('Synchronous entitlement authorization required');
     }
     if(authorized!==true)throw new TypeError('Entitlement read authorization denied');
-    return this.#registry.readGrooveEntitlements({...this.#scope,listenerId});
+    return this.#registry.readGrooveEntitlements({...this.#scope,listenerId,limit,afterGrantId});
   }
 }
 

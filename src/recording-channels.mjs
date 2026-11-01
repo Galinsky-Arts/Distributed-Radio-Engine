@@ -124,10 +124,12 @@ export class RecordingChannelRegistry {
         recordingId:current.recordingId,creatorId:current.creatorId,revision:current.revision});
     } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
   }
-  readGrooveEntitlements({tenantId,applicationId,listenerId}) {
+  readGrooveEntitlements({tenantId,applicationId,listenerId,limit=100,afterGrantId=null}) {
     for(const value of [tenantId,applicationId,listenerId])id(value,'Entitlement scope');
-    return Object.freeze(this.#db.prepare('SELECT grant_id,groove_id,recording_id,creator_id,revision FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? ORDER BY grant_id')
-      .all(tenantId,applicationId,listenerId).map(row=>Object.freeze({
+    if(!Number.isSafeInteger(limit)||limit<1||limit>100)throw new RangeError('Entitlement page limit exceeded');
+    if(afterGrantId!==null)id(afterGrantId,'entitlement cursor');
+    return Object.freeze(this.#db.prepare('SELECT grant_id,groove_id,recording_id,creator_id,revision FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? AND grant_id>? ORDER BY grant_id LIMIT ?')
+      .all(tenantId,applicationId,listenerId,afterGrantId??'',limit).map(row=>Object.freeze({
         grantId:row.grant_id,grooveId:row.groove_id,recordingId:row.recording_id,
         creatorId:row.creator_id,revision:row.revision})));
   }
