@@ -76,8 +76,8 @@ test('entry ID cannot silently become another recording and failed transaction r
 });
 test('unimplemented grant persistence cannot issue or fabricate entitlement reads',t=>{
  const {catalog:c}=setup(t);c.put(a);
- assert.throws(()=>c.grant({listenerId:'listener',grooveId:'bonus',grantId:'grant'}),/not implemented/);
- assert.throws(()=>c.entitlements('listener'),/not implemented/);
+ assert.throws(()=>c.grant({listenerId:'listener',grooveId:'bonus',grantId:'grant',proof:'test'}),/issuer required/);
+ assert.throws(()=>c.entitlements('listener',{proof:'test'}),/reader required/);
 });
 test('asynchronous creator authorization cannot bypass the publication gate',async t=>{
  const {catalog:c}=setup(t,()=>Promise.reject(new Error('private')));
@@ -134,4 +134,47 @@ test('registry will not publish without the matching reserved recording identity
  registry.reserve({tenantId:'tenant',applicationId:'app',recordingId:'takeA',creatorId:'artist',entryId:'bonus',channel:'groove'});
  assert.throws(()=>registry.publishGroove({...scope,grooveId:'bonus',recordingId:'takeA',creatorId:'other'}),/reservation required/);
  assert.equal(registry.getGroove({...scope,grooveId:'bonus'}),null);
+});
+
+test('authorized grant survives catalog withdrawal/restart and remains immutable',t=>{
+ const dir=mkdtempSync(join(tmpdir(),'groove-grants-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,'channels.sqlite');
+ let registry=new RecordingChannelRegistry(path);
+ let catalog=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true,
+  authorizeGrant:()=>true,authorizeRead:()=>true});
+ catalog.put(a);
+ const grant={listenerId:'fan',grooveId:'bonus',grantId:'award1',proof:'fixture'};
+ const accepted=catalog.grant(grant);
+ assert.equal(accepted.recordingId,'takeA');
+ assert.equal(catalog.grant(grant).revision,1);
+ assert.throws(()=>catalog.grant({...grant,grantId:'award2'}),/already issued/);
+ catalog.remove('bonus');
+ assert.throws(()=>catalog.grant({...grant,listenerId:'fan2',grantId:'award3'}),/Active/);
+ assert.equal(catalog.entitlements('fan',{proof:'fixture'}).length,1);
+ registry.close();
+ registry=new RecordingChannelRegistry(path);
+ catalog=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true,
+  authorizeGrant:()=>true,authorizeRead:()=>true});
+ assert.equal(catalog.entitlements('fan',{proof:'fixture'})[0].grantId,'award1');
+ catalog.put(a);
+ assert.equal(catalog.entitlements('fan',{proof:'fixture'})[0].revision,1);
+ registry.close();
+});
+test('issuer and reader denials cannot create or expose grants',t=>{
+ const {registry,catalog}=setup(t);
+ catalog.put(a);
+ const denied=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true,
+   authorizeGrant:()=>false,authorizeRead:()=>false});
+ assert.throws(()=>denied.grant({grooveId:'bonus',listenerId:'fan',grantId:'award',proof:'fixture'}),/denied/);
+ assert.throws(()=>denied.entitlements('fan',{proof:'fixture'}),/denied/);
+ assert.equal(registry.readGrooveEntitlements({...scope,listenerId:'fan'}).length,0);
+});
+test('grant replay binds listener and groove identity and prevents scope confusion',t=>{
+ const {registry}=setup(t);
+ const c=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true,
+   authorizeGrant:()=>true,authorizeRead:()=>true});
+ c.put(a);
+ c.grant({grooveId:'bonus',listenerId:'fan',grantId:'award',proof:'fixture'});
+ assert.throws(()=>registry.grantGroove({...scope,grooveId:'bonus',listenerId:'other',grantId:'award'}),/Conflicting/);
+ assert.deepEqual(c.entitlements('other',{proof:'fixture'}),[]);
 });

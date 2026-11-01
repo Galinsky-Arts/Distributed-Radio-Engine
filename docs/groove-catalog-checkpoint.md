@@ -60,3 +60,18 @@ republication of the same immutable identity increments the revision. Fresh
 catalog instances reload authoritative state after restart, rather than relying
 on an in-memory map. Real issuer grants, rights and secure delivery remain
 unimplemented and the PR must remain draft.
+
+## Durable grant ledger (software boundary)
+
+A separate SQLite grant table now stores immutable grant IDs and the original
+publication revision/recording reference, with an atomic active-publication
+check and unique listener/Groove entitlement constraint. Exact replay is
+idempotent; conflicting grant IDs and duplicate issuance fail closed.
+Withdrawals never erase existing entitlement snapshots, including after restart.
+GrooveCatalog.grant and entitlements require explicit synchronous trusted issuer
+and reader authorization with bounded opaque proof; missing/async/truthy
+callback results cannot issue grants or reveal entitlements.
+
+Actual issuer/root authentication, service rights, end-to-end encrypted asset
+delivery and integration with later reward/commerce writers are still pending.
+Passing fixture tests is not proof of any live grant. Keep PR25 draft.

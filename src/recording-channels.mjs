@@ -28,6 +28,7 @@ export class RecordingChannelRegistry {
         throw new Error('Unsupported recording-channel schema');
       db.exec("CREATE TABLE IF NOT EXISTS radio_recording_channels(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,recording_id TEXT NOT NULL,creator_id TEXT NOT NULL,channel TEXT NOT NULL CHECK(channel IN ('groove','points','paid')),entry_id TEXT NOT NULL,PRIMARY KEY(tenant_id,application_id,recording_id),UNIQUE(tenant_id,application_id,channel,entry_id)) STRICT");
       db.exec("CREATE TABLE IF NOT EXISTS radio_groove_publications(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,groove_id TEXT NOT NULL,recording_id TEXT NOT NULL,creator_id TEXT NOT NULL,revision INTEGER NOT NULL CHECK(revision>=1),active INTEGER NOT NULL CHECK(active IN (0,1)),PRIMARY KEY(tenant_id,application_id,groove_id)) STRICT");
+      db.exec("CREATE TABLE IF NOT EXISTS radio_groove_grants(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,grant_id TEXT NOT NULL,listener_id TEXT NOT NULL,groove_id TEXT NOT NULL,recording_id TEXT NOT NULL,creator_id TEXT NOT NULL,revision INTEGER NOT NULL CHECK(revision>=1),PRIMARY KEY(tenant_id,application_id,grant_id),UNIQUE(tenant_id,application_id,listener_id,groove_id)) STRICT");
       db.exec('COMMIT');
     } catch(error){try{db.exec('ROLLBACK');}catch{}db.close();throw error;}
     this.#db=db;
@@ -94,6 +95,38 @@ export class RecordingChannelRegistry {
         .run(tenantId,applicationId,grooveId);
       this.#db.exec('COMMIT');return !!old?.active;
     } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+  }
+  /** Atomic, immutable entitlement snapshot. Caller verifies the issuer beforehand. */
+  grantGroove({tenantId,applicationId,grooveId,listenerId,grantId}) {
+    for(const value of [tenantId,applicationId,grooveId,listenerId,grantId])id(value,'Groove grant identity');
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const current=this.getGroove({tenantId,applicationId,grooveId});
+      const old=this.#db.prepare('SELECT * FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND grant_id=?')
+        .get(tenantId,applicationId,grantId);
+      if(old) {
+        if(old.listener_id!==listenerId||old.groove_id!==grooveId)throw new RangeError('Conflicting authenticated grant replay');
+        this.#db.exec('COMMIT');
+        return Object.freeze({tenantId,applicationId,grantId,listenerId,grooveId,
+          recordingId:old.recording_id,creatorId:old.creator_id,revision:old.revision});
+      }
+      if(!current?.active)throw new RangeError('Active authorized Groove required');
+      const existing=this.#db.prepare('SELECT grant_id FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? AND groove_id=?')
+        .get(tenantId,applicationId,listenerId,grooveId);
+      if(existing)throw new RangeError('Listener entitlement already issued under another grant');
+      this.#db.prepare('INSERT INTO radio_groove_grants VALUES(?,?,?,?,?,?,?,?)')
+        .run(tenantId,applicationId,grantId,listenerId,grooveId,current.recordingId,current.creatorId,current.revision);
+      this.#db.exec('COMMIT');
+      return Object.freeze({tenantId,applicationId,grantId,listenerId,grooveId,
+        recordingId:current.recordingId,creatorId:current.creatorId,revision:current.revision});
+    } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+  }
+  readGrooveEntitlements({tenantId,applicationId,listenerId}) {
+    for(const value of [tenantId,applicationId,listenerId])id(value,'Entitlement scope');
+    return Object.freeze(this.#db.prepare('SELECT grant_id,groove_id,recording_id,creator_id,revision FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? ORDER BY grant_id')
+      .all(tenantId,applicationId,listenerId).map(row=>Object.freeze({
+        grantId:row.grant_id,grooveId:row.groove_id,recordingId:row.recording_id,
+        creatorId:row.creator_id,revision:row.revision})));
   }
   close(){this.#db.close();}
 }
