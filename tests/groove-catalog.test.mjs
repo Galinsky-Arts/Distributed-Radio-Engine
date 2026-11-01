@@ -178,3 +178,28 @@ test('grant replay binds listener and groove identity and prevents scope confusi
  assert.throws(()=>registry.grantGroove({...scope,grooveId:'bonus',listenerId:'other',grantId:'award'}),/Conflicting/);
  assert.deepEqual(c.entitlements('other',{proof:'fixture'}),[]);
 });
+
+test('independent SQLite connections cannot double-issue one Groove entitlement',t=>{
+ const dir=mkdtempSync(join(tmpdir(),'groove-race-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,'channels.sqlite');
+ const one=new RecordingChannelRegistry(path),two=new RecordingChannelRegistry(path);
+ const config=registry=>new GrooveCatalog({registry,scope,authorizeCatalog:()=>true,
+   authorizeGrant:()=>true,authorizeRead:()=>true});
+ const a1=config(one),a2=config(two);
+ a1.put(a);
+ const issued=a1.grant({grooveId:'bonus',listenerId:'fan',grantId:'first',proof:'fixture'});
+ assert.equal(a2.grant({grooveId:'bonus',listenerId:'fan',grantId:'first',proof:'fixture'}).grantId,issued.grantId);
+ assert.throws(()=>a2.grant({grooveId:'bonus',listenerId:'fan',grantId:'second',proof:'fixture'}),/already issued/);
+ assert.equal(a2.entitlements('fan',{proof:'fixture'}).length,1);
+ one.close();two.close();
+});
+test('asynchronous or throwing issuer and reader callbacks fail closed and sanitize secrets',async t=>{
+ const {registry,catalog:c}=setup(t);c.put(a);
+ const issue=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true,
+   authorizeGrant:()=>Promise.reject(new Error('private-issuer-token')),
+   authorizeRead:()=>{throw new Error('private-reader-token');}});
+ assert.throws(()=>issue.grant({grooveId:'bonus',listenerId:'fan',grantId:'award',proof:'fixture'}),/Synchronous issuer/);
+ assert.throws(()=>issue.entitlements('fan',{proof:'fixture'}),error=>error.message==='Entitlement read authorization denied');
+ assert.equal(registry.readGrooveEntitlements({...scope,listenerId:'fan'}).length,0);
+ await new Promise(resolve=>setImmediate(resolve));
+});
