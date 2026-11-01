@@ -75,3 +75,13 @@ callback results cannot issue grants or reveal entitlements.
 Actual issuer/root authentication, service rights, end-to-end encrypted asset
 delivery and integration with later reward/commerce writers are still pending.
 Passing fixture tests is not proof of any live grant. Keep PR25 draft.
+
+## DRE-05 rights-policy adapter
+
+createGrooveRightsAuthorizer connects a trusted creator decision and trusted
+rights-record lookup to the existing DRE-05 requirePublishingRights evaluator.
+It checks the exact recording asset identity, current authorized reward use,
+territory, and validity; asynchronous/throwing authorities fail closed without
+exposing provider details. This is testable adapter code, not a deployed rights
+registry. Real creator/root provisioning and rights-record persistence remain
+external approved integration work, as does secure encrypted content delivery.

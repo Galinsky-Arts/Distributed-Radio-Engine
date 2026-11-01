@@ -1,3 +1,5 @@
+import {requirePublishingRights} from './rights.mjs';
+
 /** DRE-19 separate bonus-recording catalog, not points or paid commerce. */
 export class GrooveCatalog {
   #registry; #scope; #authorize; #authorizeGrant; #authorizeRead;
@@ -70,3 +72,33 @@ export class GrooveCatalog {
   }
 }
 
+
+/**
+ * DRE-05 rights policy adapter for creator-authorized Groove publication.
+ * The trusted resolver must look up the immutable rights record by the exact
+ * recording ID; caller-provided rights and client-approved booleans are not used.
+ * The real creator authority and rights store are externally provided.
+ */
+export function createGrooveRightsAuthorizer({authorizeCreator,resolveRights,territory,now=Date.now}={}) {
+  if(typeof authorizeCreator!=='function'||typeof resolveRights!=='function'||
+      typeof territory!=='string'||!/^[A-Z]{2}$/.test(territory)||typeof now!=='function')
+    throw new TypeError('Trusted creator, rights resolver and territory required');
+  return (operation,scope)=>{
+    if(!operation||!scope||!['publish','withdraw'].includes(operation.action))return false;
+    try {
+      const allowed=authorizeCreator(operation,scope);
+      if(allowed&&typeof allowed.then==='function'){Promise.resolve(allowed).catch(()=>{});return false;}
+      if(allowed!==true)return false;
+      if(operation.action==='withdraw')return true;
+      const rights=resolveRights(Object.freeze({tenantId:scope.tenantId,
+        applicationId:scope.applicationId,recordingId:operation.recordingId,
+        creatorId:operation.creatorId}));
+      if(rights&&typeof rights.then==='function'){Promise.resolve(rights).catch(()=>{});return false;}
+      if(!rights||rights.assetRef!==operation.recordingId)return false;
+      const at=now();
+      if(!Number.isSafeInteger(at)||at<0)return false;
+      return requirePublishingRights(rights,{tenantId:scope.tenantId,
+        assetRef:operation.recordingId,use:'reward',territory,at})===true;
+    } catch {return false;}
+  };
+}

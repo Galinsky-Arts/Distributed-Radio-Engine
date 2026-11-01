@@ -4,7 +4,7 @@ import {mkdtempSync,rmSync,chmodSync,symlinkSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {GrooveCatalog} from '../src/groove-catalog.mjs';
+import {GrooveCatalog,createGrooveRightsAuthorizer} from '../src/groove-catalog.mjs';
 import {RecordingChannelRegistry} from '../src/recording-channels.mjs';
 const scope={tenantId:'tenant',applicationId:'app',principalId:'publisher'};
 const a={grooveId:'bonus',recordingId:'takeA',creatorId:'artist',exclusive:true};
@@ -215,4 +215,35 @@ test('stale authorized publication revision cannot grant or withdraw a republish
    creatorId:'artist',expectedRevision:prior.revision}),/Stale/);
  assert.equal(registry.readGrooveEntitlements({...scope,listenerId:'fan'}).length,0);
  assert.equal(registry.getGroove({...scope,grooveId:'bonus'}).active,true);
+});
+
+test('trusted DRE-05 rights adapter requires reward rights, territory and valid window',t=>{
+ const record={tenantId:'tenant',assetRef:'takeA',uses:['reward'],
+  territories:['US'],validFrom:'2026-01-01T00:00:00Z',
+  validUntil:'2027-01-01T00:00:00Z'};
+ const authorizeCreator=()=>true;
+ const build=(rights=record,at=Date.parse('2026-06-01T00:00:00Z'))=>
+   createGrooveRightsAuthorizer({authorizeCreator,resolveRights:()=>rights,
+     territory:'US',now:()=>at});
+ const {registry}=setup(t);
+ const c=new GrooveCatalog({registry,scope,authorizeCatalog:build()});
+ assert.equal(c.put(a).active,true);
+ const denied=new GrooveCatalog({registry,scope,authorizeCatalog:build({...record,uses:['sale']})});
+ assert.throws(()=>denied.put({...a,grooveId:'other',recordingId:'takeB'}),/denied/);
+ const wrongTerritory=new GrooveCatalog({registry,scope,authorizeCatalog:build({...record,territories:['GB']})});
+ assert.throws(()=>wrongTerritory.put(a),/denied/);
+ const expired=new GrooveCatalog({registry,scope,authorizeCatalog:build(record,Date.parse('2028-01-01T00:00:00Z'))});
+ assert.throws(()=>expired.put(a),/denied/);
+});
+test('rights adapter rejects mismatched trusted asset, forged scope and async creator authority',async()=>{
+ const record={tenantId:'tenant',assetRef:'takeB',uses:['reward'],territories:['US'],
+   validFrom:'2026-01-01T00:00:00Z',validUntil:'2027-01-01T00:00:00Z'};
+ const operation={action:'publish',recordingId:'takeA',creatorId:'artist'};
+ const authorizer=createGrooveRightsAuthorizer({authorizeCreator:()=>true,
+   resolveRights:()=>record,territory:'US',now:()=>Date.parse('2026-06-01T00:00:00Z')});
+ assert.equal(authorizer(operation,scope),false);
+ const asyncAuth=createGrooveRightsAuthorizer({authorizeCreator:()=>Promise.reject(new Error('private')),
+   resolveRights:()=>record,territory:'US',now:()=>Date.parse('2026-06-01T00:00:00Z')});
+ assert.equal(asyncAuth(operation,scope),false);
+ await new Promise(resolve=>setImmediate(resolve));
 });
