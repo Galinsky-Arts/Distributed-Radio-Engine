@@ -39,7 +39,8 @@ export class GrooveCatalog {
       Promise.resolve(authorized).catch(()=>{});throw new TypeError('Synchronous issuer authorization required');
     }
     if(authorized!==true)throw new TypeError('Groove grant authorization denied');
-    return this.#registry.grantGroove({...this.#scope,grooveId,listenerId,grantId});
+    return this.#registry.grantGroove({...this.#scope,grooveId,listenerId,grantId,
+      recordingId:item.recordingId,creatorId:item.creatorId,revision:item.revision});
   }
   remove(grooveId){
     const item=this.#registry.getGroove({...this.#scope,grooveId});
@@ -49,7 +50,7 @@ export class GrooveCatalog {
     catch {throw new TypeError('Creator withdrawal authorization denied');}
     if(result&&typeof result.then==='function'){Promise.resolve(result).catch(()=>{});throw new TypeError('Synchronous creator authorization required');}
     if(result!==true)throw new TypeError('Creator withdrawal authorization denied');
-    return this.#registry.withdrawGroove({...this.#scope,grooveId,creatorId:item.creatorId});
+    return this.#registry.withdrawGroove({...this.#scope,grooveId,creatorId:item.creatorId,expectedRevision:item.revision});
   }
   entitlements(listenerId,{proof}={}) {
     if(typeof listenerId!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(listenerId))

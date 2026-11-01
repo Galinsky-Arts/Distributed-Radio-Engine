@@ -85,20 +85,21 @@ export class RecordingChannelRegistry {
       this.#db.exec('COMMIT');return published;
     } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
   }
-  withdrawGroove({tenantId,applicationId,grooveId,creatorId}) {
+  withdrawGroove({tenantId,applicationId,grooveId,creatorId,expectedRevision}) {
     for(const value of [tenantId,applicationId,grooveId,creatorId])id(value,'Groove withdrawal');
     this.#db.exec('BEGIN IMMEDIATE');
     try {
       const old=this.getGroove({tenantId,applicationId,grooveId});
-      if(old&&old.creatorId!==creatorId)throw new RangeError('Creator identity mismatch');
+      if(old&&(old.creatorId!==creatorId||old.revision!==expectedRevision))throw new RangeError('Stale authorized Groove revision');
       if(old?.active)this.#db.prepare('UPDATE radio_groove_publications SET revision=revision+1,active=0 WHERE tenant_id=? AND application_id=? AND groove_id=?')
         .run(tenantId,applicationId,grooveId);
       this.#db.exec('COMMIT');return !!old?.active;
     } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
   }
   /** Atomic, immutable entitlement snapshot. Caller verifies the issuer beforehand. */
-  grantGroove({tenantId,applicationId,grooveId,listenerId,grantId}) {
-    for(const value of [tenantId,applicationId,grooveId,listenerId,grantId])id(value,'Groove grant identity');
+  grantGroove({tenantId,applicationId,grooveId,listenerId,grantId,recordingId,creatorId,revision}) {
+    for(const value of [tenantId,applicationId,grooveId,listenerId,grantId,recordingId,creatorId])id(value,'Groove grant identity');
+    if(!Number.isSafeInteger(revision)||revision<1)throw new RangeError('Expected publication revision required');
     this.#db.exec('BEGIN IMMEDIATE');
     try {
       const current=this.getGroove({tenantId,applicationId,grooveId});
@@ -111,6 +112,8 @@ export class RecordingChannelRegistry {
           recordingId:old.recording_id,creatorId:old.creator_id,revision:old.revision});
       }
       if(!current?.active)throw new RangeError('Active authorized Groove required');
+      if(current.revision!==revision||current.recordingId!==recordingId||current.creatorId!==creatorId)
+        throw new RangeError('Stale authorized Groove grant revision');
       const existing=this.#db.prepare('SELECT grant_id FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? AND groove_id=?')
         .get(tenantId,applicationId,listenerId,grooveId);
       if(existing)throw new RangeError('Listener entitlement already issued under another grant');

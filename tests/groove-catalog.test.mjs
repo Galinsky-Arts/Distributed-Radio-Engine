@@ -175,7 +175,7 @@ test('grant replay binds listener and groove identity and prevents scope confusi
    authorizeGrant:()=>true,authorizeRead:()=>true});
  c.put(a);
  c.grant({grooveId:'bonus',listenerId:'fan',grantId:'award',proof:'fixture'});
- assert.throws(()=>registry.grantGroove({...scope,grooveId:'bonus',listenerId:'other',grantId:'award'}),/Conflicting/);
+ assert.throws(()=>registry.grantGroove({...scope,grooveId:'bonus',listenerId:'other',grantId:'award',recordingId:'takeA',creatorId:'artist',revision:1}),/Conflicting/);
  assert.deepEqual(c.entitlements('other',{proof:'fixture'}),[]);
 });
 
@@ -202,4 +202,17 @@ test('asynchronous or throwing issuer and reader callbacks fail closed and sanit
  assert.throws(()=>issue.entitlements('fan',{proof:'fixture'}),error=>error.message==='Entitlement read authorization denied');
  assert.equal(registry.readGrooveEntitlements({...scope,listenerId:'fan'}).length,0);
  await new Promise(resolve=>setImmediate(resolve));
+});
+
+test('stale authorized publication revision cannot grant or withdraw a republished item',t=>{
+ const {registry,catalog:c}=setup(t);c.put(a);
+ const prior=registry.getGroove({...scope,grooveId:'bonus'});
+ c.remove('bonus');c.put(a);
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus'}).revision,3);
+ assert.throws(()=>registry.grantGroove({...scope,grooveId:'bonus',listenerId:'fan',
+   grantId:'stale',recordingId:'takeA',creatorId:'artist',revision:prior.revision}),/Stale/);
+ assert.throws(()=>registry.withdrawGroove({...scope,grooveId:'bonus',
+   creatorId:'artist',expectedRevision:prior.revision}),/Stale/);
+ assert.equal(registry.readGrooveEntitlements({...scope,listenerId:'fan'}).length,0);
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus'}).active,true);
 });
