@@ -18,7 +18,9 @@ import {verifiedStationTransition} from '../src/transition-opportunity.mjs';
 const program={
  stationId:'radio',digest:'digest',version:1,durationMs:5000,
  timeline:[{role:'opening',fromMs:0,toMs:500},{role:'content',fromMs:500,toMs:2000},
-  {role:'closing',fromMs:2000,toMs:3000},{role:'opening',fromMs:4000,toMs:4500}],
+  {role:'closing',fromMs:2000,toMs:3000},{role:'sponsor',fromMs:3000,toMs:4000},
+  {role:'opening',fromMs:4000,toMs:4500},{role:'content',fromMs:4500,toMs:4800},
+  {role:'closing',fromMs:4800,toMs:5000}],
  completions:[{occurrenceId:1,vestNotBeforeMs:3000}],
  opportunities:[{id:'shared-marker',atMs:3000,afterOccurrence:1}]
 };
@@ -48,4 +50,31 @@ test('marker must be after completed outro and before next intro',()=>{
    ...config,program:{...program,opportunities:[{id:'marker',atMs,afterOccurrence:1}]} }),/Opportunity/);
  assert.throws(()=>verifiedStationTransition({...config,
    program:{...program,opportunities:[...program.opportunities,...program.opportunities]}}),/Multiple/);
+});
+
+import {compileRadioProgram} from '../src/program.mjs';
+import {compileEditorialRevision} from '../src/editorial.mjs';
+test('real DRE-06 compiled program projects a single shared marker after complete outro',()=>{
+ const revision=compileEditorialRevision({tenantId:'t',applicationId:'app',stationId:'radio',
+   version:1,program:[{kind:'identification',ref:'intro'},{kind:'media',ref:'song'},
+     {kind:'identification',ref:'outro'},{kind:'marker',ref:'groove'},
+     {kind:'identification',ref:'intro2'},{kind:'media',ref:'song2'},
+     {kind:'identification',ref:'outro2'}]});
+ const durations={intro:1000,song:10000,outro:2000,intro2:1000,song2:3000,outro2:2000};
+ const compiled=compileRadioProgram({revision,approval:{digest:revision.digest,
+   stationId:revision.stationId,version:revision.version},durations,verifyPublishingRight:()=>true});
+ const result=verifiedStationTransition({program:compiled,cycle:2,
+   completedOccurrenceId:1,stationStartedAtMs:100000,verifyProgram:()=>true});
+ assert.equal(result.atMs,100000+2*compiled.durationMs+13000);
+ assert.equal(result.eligible,true);
+ const none=verifiedStationTransition({program:compiled,cycle:2,
+   completedOccurrenceId:2,stationStartedAtMs:100000,verifyProgram:()=>true});
+ assert.equal(none.eligible,false);
+});
+test('untrusted malformed compiled boundaries do not pass a permissive test verifier',()=>{
+ const c={program,cycle:0,completedOccurrenceId:1,stationStartedAtMs:1000,verifyProgram:()=>true};
+ assert.throws(()=>verifiedStationTransition({...c,program:{...program,
+   timeline:program.timeline.map((r,i)=>i===1?{...r,fromMs:501}:r)}}),/gap/);
+ assert.throws(()=>verifiedStationTransition({...c,program:{...program,
+   timeline:program.timeline.map((r,i)=>i===2?{...r,toMs:2999}:r)}}),/gap|closing/);
 });

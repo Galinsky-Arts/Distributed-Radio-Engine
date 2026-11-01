@@ -51,10 +51,19 @@ export function verifiedStationTransition({program,cycle,completedOccurrenceId,
        !Number.isSafeInteger(row.fromMs)||!Number.isSafeInteger(row.toMs)||
        row.fromMs<0||row.toMs<=row.fromMs||row.toMs>durationMs))
     throw new RangeError('Invalid approved timeline boundary');
+  let cursor=0;
+  for(const segment of normalized.timeline) {
+    if(segment.fromMs!==cursor)throw new RangeError('Approved timeline has gap or overlap');
+    cursor=segment.toMs;
+  }
+  if(cursor!==durationMs)throw new RangeError('Approved timeline duration mismatch');
   const completion=normalized.completions.filter(row=>row.occurrenceId===completedOccurrenceId);
   if(completion.length!==1||!Number.isSafeInteger(completion[0].vestNotBeforeMs)||
      completion[0].vestNotBeforeMs<0||completion[0].vestNotBeforeMs>durationMs)
     throw new RangeError('Unrecognized completed occurrence');
+  if(normalized.timeline.filter(row=>row.role==='closing'&&
+       row.toMs===completion[0].vestNotBeforeMs).length!==1)
+    throw new RangeError('Completed occurrence lacks matching closing identification');
   const markers=normalized.opportunities.filter(row=>row.afterOccurrence===completedOccurrenceId);
   if(markers.length>1)throw new RangeError('Multiple transition opportunities for one occurrence');
   if(markers.length===0)return Object.freeze({eligible:false,opportunityId:null,atMs:null,
