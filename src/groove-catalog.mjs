@@ -20,7 +20,6 @@ export class GrooveCatalog {
     catch {throw new TypeError('Creator catalog authorization denied');}
     if(result&&typeof result.then==='function'){Promise.resolve(result).catch(()=>{});throw new TypeError('Synchronous creator authorization required');}
     if(result!==true)throw new TypeError('Creator catalog authorization denied');
-    this.#registry.reserve({tenantId:this.#scope.tenantId,applicationId:this.#scope.applicationId,recordingId,creatorId,entryId:grooveId,channel:'groove'});
     return this.#registry.publishGroove({...this.#scope,grooveId,recordingId,creatorId});
   }
   grant({grooveId,listenerId,grantId,proof}={}) {

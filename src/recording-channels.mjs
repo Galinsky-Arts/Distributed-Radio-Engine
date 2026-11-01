@@ -72,8 +72,10 @@ export class RecordingChannelRegistry {
     this.#db.exec('BEGIN IMMEDIATE');
     try {
       const reserved=this.get({tenantId,applicationId,recordingId});
-      if(!reserved||reserved.channel!=='groove'||reserved.entryId!==grooveId||reserved.creatorId!==creatorId)
-        throw new RangeError('Groove channel reservation required');
+      if(reserved&&(reserved.channel!=='groove'||reserved.entryId!==grooveId||reserved.creatorId!==creatorId))
+        throw new RangeError('Recording already reserved in another identity or channel');
+      if(!reserved)this.#db.prepare('INSERT INTO radio_recording_channels VALUES(?,?,?,?,?,?)')
+        .run(tenantId,applicationId,recordingId,creatorId,'groove',grooveId);
       const old=this.getGroove({tenantId,applicationId,grooveId});
       if(old&&(old.recordingId!==recordingId||old.creatorId!==creatorId))
         throw new RangeError('Cannot reassign permanent Groove identity');

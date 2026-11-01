@@ -130,10 +130,11 @@ test('publication/withdrawal require creator authority and isolate scope',t=>{
 });
 test('registry will not publish without the matching reserved recording identity',t=>{
  const {registry}=setup(t);
- assert.throws(()=>registry.publishGroove({...scope,grooveId:'bonus',recordingId:'takeA',creatorId:'artist'}),/reservation required/);
- registry.reserve({tenantId:'tenant',applicationId:'app',recordingId:'takeA',creatorId:'artist',entryId:'bonus',channel:'groove'});
- assert.throws(()=>registry.publishGroove({...scope,grooveId:'bonus',recordingId:'takeA',creatorId:'other'}),/reservation required/);
- assert.equal(registry.getGroove({...scope,grooveId:'bonus'}),null);
+ const opened=registry.publishGroove({...scope,grooveId:'bonus',recordingId:'takeA',creatorId:'artist'});
+ assert.equal(opened.active,true);
+ assert.equal(registry.get({...scope,recordingId:'takeA'}).channel,'groove');
+ assert.throws(()=>registry.publishGroove({...scope,grooveId:'bonus',recordingId:'takeA',creatorId:'other'}),/already reserved/);
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus'}).creatorId,'artist');
 });
 
 test('authorized grant survives catalog withdrawal/restart and remains immutable',t=>{
@@ -264,4 +265,14 @@ test('entitlement reads use bounded stable cursor pages with authorized query pa
  assert.equal(seen.afterGrantId,'b');
  for(const limit of [0,101,1.5])assert.throws(()=>c.entitlements('fan',{proof:'fixture',limit}),/pagination/);
  assert.throws(()=>registry.readGrooveEntitlements({...scope,listenerId:'fan',limit:101}),/limit/);
+});
+
+test('catalog publication is atomic with permanent channel reservation across failed collisions',t=>{
+ const {registry,catalog:c}=setup(t);
+ const first=c.put(a);
+ assert.equal(first.active,true);
+ assert.throws(()=>registry.publishGroove({...scope,grooveId:'bonus2',recordingId:'takeA',creatorId:'artist'}),/already reserved/);
+ assert.equal(registry.getGroove({...scope,grooveId:'bonus2'}),null);
+ assert.equal(registry.get({...scope,recordingId:'takeA'}).entryId,'bonus');
+ assert.equal(c.put(a).revision,1);
 });

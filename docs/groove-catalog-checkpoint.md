@@ -85,3 +85,10 @@ territory, and validity; asynchronous/throwing authorities fail closed without
 exposing provider details. This is testable adapter code, not a deployed rights
 registry. Real creator/root provisioning and rights-record persistence remain
 external approved integration work, as does secure encrypted content delivery.
+
+## Atomic first publication
+
+The initial channel reservation and active publication now share one
+BEGIN IMMEDIATE transaction. A failed publication no longer strands an
+independently committed orphan channel reservation before the catalog row can
+be written. Conflicting creator/recording identity remains fail-closed.
