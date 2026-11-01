@@ -59,7 +59,7 @@ test('bounded pages and lifetime counter are separate from provisional rewards',
  const page=history.history({creatorId:'artist',proof:'fixture',limit:2});
  assert.deepEqual(page.map(x=>x.occurrenceId),['a','b']);
  assert.deepEqual(history.history({creatorId:'artist',proof:'fixture',limit:2,afterOccurrenceId:'b'})
-   .map(x=>x.occurrenceId),['c','occ1'].filter(x=>x>'b'));
+   .map(x=>x.occurrenceId),['c']);
  assert.equal(history.lifetimeCount({creatorId:'artist',proof:'fixture'}),3);
  assert.throws(()=>history.history({creatorId:'artist',proof:'fixture',limit:101}),/Bounded/);
  history.close();
