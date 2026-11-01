@@ -109,6 +109,9 @@ export class RecordingChannelRegistry {
         .get(tenantId,applicationId,grantId);
       if(old) {
         if(old.listener_id!==listenerId||old.groove_id!==grooveId)throw new RangeError('Conflicting authenticated grant replay');
+        if(!current||old.recording_id!==current.recordingId||
+            old.creator_id!==current.creatorId||old.revision>current.revision)
+          throw new RangeError('Corrupt immutable entitlement binding');
         this.#db.exec('COMMIT');
         return Object.freeze({tenantId,applicationId,grantId,listenerId,grooveId,
           recordingId:old.recording_id,creatorId:old.creator_id,revision:old.revision});
@@ -131,9 +134,14 @@ export class RecordingChannelRegistry {
     if(!Number.isSafeInteger(limit)||limit<1||limit>100)throw new RangeError('Entitlement page limit exceeded');
     if(afterGrantId!==null)id(afterGrantId,'entitlement cursor');
     return Object.freeze(this.#db.prepare('SELECT grant_id,groove_id,recording_id,creator_id,revision FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? AND grant_id>? ORDER BY grant_id LIMIT ?')
-      .all(tenantId,applicationId,listenerId,afterGrantId??'',limit).map(row=>Object.freeze({
-        grantId:row.grant_id,grooveId:row.groove_id,recordingId:row.recording_id,
-        creatorId:row.creator_id,revision:row.revision})));
+      .all(tenantId,applicationId,listenerId,afterGrantId??'',limit).map(row=>{
+        const catalog=this.getGroove({tenantId,applicationId,grooveId:row.groove_id});
+        if(!catalog||catalog.recordingId!==row.recording_id||
+            catalog.creatorId!==row.creator_id||row.revision>catalog.revision)
+          throw new RangeError('Corrupt immutable entitlement binding');
+        return Object.freeze({grantId:row.grant_id,grooveId:row.groove_id,
+          recordingId:row.recording_id,creatorId:row.creator_id,revision:row.revision});
+      }));
   }
   close(){this.#db.close();}
 }

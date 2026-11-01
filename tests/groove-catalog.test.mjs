@@ -276,3 +276,20 @@ test('catalog publication is atomic with permanent channel reservation across fa
  assert.equal(registry.get({...scope,recordingId:'takeA'}).entryId,'bonus');
  assert.equal(c.put(a).revision,1);
 });
+
+test('corrupt persisted grant identity fails closed instead of exposing false entitlement',t=>{
+ const dir=mkdtempSync(join(tmpdir(),'groove-corrupt-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,'channels.sqlite');let registry=new RecordingChannelRegistry(path);
+ const c=new GrooveCatalog({registry,scope,authorizeCatalog:()=>true,
+   authorizeGrant:()=>true,authorizeRead:()=>true});
+ c.put(a);c.grant({grooveId:'bonus',listenerId:'fan',grantId:'award',proof:'fixture'});
+ registry.close();
+ const db=new DatabaseSync(path);
+ db.prepare("UPDATE radio_groove_grants SET recording_id='forged' WHERE grant_id='award'").run();
+ db.close();
+ registry=new RecordingChannelRegistry(path);
+ assert.throws(()=>registry.readGrooveEntitlements({...scope,listenerId:'fan'}),/Corrupt/);
+ assert.throws(()=>registry.grantGroove({...scope,grooveId:'bonus',listenerId:'fan',
+   grantId:'award',recordingId:'takeA',creatorId:'artist',revision:1}),/Corrupt/);
+ registry.close();
+});
