@@ -72,8 +72,11 @@ export function auditedRarityDraw({policy,seed,issuerId,stationId,
     const sample=BigInt('0x'+raw.toString('hex'));
     if(sample>=limit)continue;
     const draw=sample%total,tier=selectRarityTier(policy,draw);
+    const contextCommitment=createHash('sha256').update(context).digest('hex');
+    const weightsCommitment=createHash('sha256')
+      .update(JSON.stringify(policy.weights.map(weight=>weight.toString()))).digest('hex');
     return Object.freeze({tier,draw,seedCommitment:createHash('sha256').update(seed).digest('hex'),
-      policyTotal:total,issuerId,stationId,opportunityId,listenerId,sequence,
+      contextCommitment,weightsCommitment,policyTotal:total,
       algorithm:'DRE-21-HMAC-SHA256-rejection-v1'});
   }
   throw new RangeError('Bounded uniform draw unavailable');

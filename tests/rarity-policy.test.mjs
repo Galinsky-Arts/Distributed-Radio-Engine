@@ -26,7 +26,7 @@ test('completion thresholds unlock rare tiers monotonically with positive tail',
  assert.throws(()=>eligibleRarityWeights({minimumCompletions:[2,1],completed:10}),/ordered/);
 });
 test('seeded issuer audit draw is deterministic and bound to each opportunity and listener',()=>{
- const policy=eligibleRarityWeights({minimumCompletions:[0,3,10],completed:20});
+ const policy=eligibleRarityWeights({minimumCompletions:Array(32).fill(0),completed:20,base:10n});
  const seed=new Uint8Array(32).fill(7);
  const input={policy,seed,issuerId:'issuer',stationId:'radio',
    opportunityId:'occurrence1',listenerId:'listener',sequence:0};
@@ -45,4 +45,14 @@ test('trusted seed, valid policy totals and scoped identity are mandatory',()=>{
  assert.throws(()=>auditedRarityDraw({...input,seed:new Uint8Array(4)}),/seed/);
  assert.throws(()=>auditedRarityDraw({...input,listenerId:''}),/seed/);
  assert.throws(()=>auditedRarityDraw({...input,policy:{...policy,total:1n}}),/weights/);
+});
+
+test('auditable draw does not expose raw listener IDs or protected issuer seeds',()=>{
+ const seed=new Uint8Array(32).fill(3),policy=rarityWeights({tiers:4});
+ const evidence=auditedRarityDraw({policy,seed,issuerId:'issuer',stationId:'radio',
+   opportunityId:'occ',listenerId:'private-listener'});
+ assert.equal(evidence.listenerId,undefined);
+ assert.equal(evidence.seed,undefined);
+ assert.equal(evidence.contextCommitment.length,64);
+ assert.equal(evidence.weightsCommitment.length,64);
 });
