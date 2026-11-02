@@ -1,9 +1,15 @@
 {
-  "schemaVersion": 1,
   "repository": "neophilism/Distributed-Radio-Engine",
-  "roadmapVersion": 1,
+  "title": "Distributed-Radio-Engine",
   "planVerified": true,
   "plannedPrCount": 28,
+  "sourceFiles": [
+    "docs/roadmap.json",
+    "docs/DEVELOPMENT_PLAN.md"
+  ],
+  "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
+  "schemaVersion": 1,
+  "roadmapVersion": 1,
   "observedAt": "2026-10-11T17:40:54.792Z",
   "units": [
     {
@@ -12,7 +18,10 @@
       "origin": "addition",
       "prs": [
         2
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-02",
@@ -20,7 +29,10 @@
       "origin": "addition",
       "prs": [
         3
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-03",
@@ -28,7 +40,10 @@
       "origin": "addition",
       "prs": [
         4
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-04",
@@ -36,7 +51,10 @@
       "origin": "addition",
       "prs": [
         5
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-05",
@@ -44,7 +62,10 @@
       "origin": "addition",
       "prs": [
         6
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-06",
@@ -52,7 +73,10 @@
       "origin": "addition",
       "prs": [
         7
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-07",
@@ -60,7 +84,10 @@
       "origin": "addition",
       "prs": [
         8
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-08",
@@ -68,7 +95,10 @@
       "origin": "addition",
       "prs": [
         9
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-09",
@@ -76,7 +106,10 @@
       "origin": "addition",
       "prs": [
         11
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-10",
@@ -84,115 +117,172 @@
       "origin": "addition",
       "prs": [
         14
-      ]
+      ],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-11",
       "title": "Radio join and playback SDK facade",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-12",
       "title": "Contribution point policy and units",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-13",
       "title": "Independent multi-speaker evidence",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-14",
       "title": "Realtime provisional point progress",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-15",
       "title": "Outro-complete point vesting",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-16",
       "title": "Creator-specific transactional point wallets",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-17",
       "title": "Default exponential reward price ladder",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-18",
       "title": "Points reward catalog and atomic redemption",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-19",
       "title": "Separate Unlocked Groove catalog",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-20",
       "title": "Shared transition opportunity scheduler",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-21",
       "title": "Exponential rarity and fair eligibility",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-22",
       "title": "Listener completion progress including headphones",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-23",
       "title": "Groove grant ledger and secure delivery",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-24",
       "title": "Commerce and complete-work products",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-25",
       "title": "Creator and sponsor reporting",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-26",
       "title": "E2EESA security, privacy and recovery",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-27",
       "title": "Mixed-content and radio integration pilot",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     },
     {
       "id": "DRE-28",
       "title": "Stable reusable radio release",
       "origin": "addition",
-      "prs": []
+      "prs": [],
+      "dependsOn": [],
+      "externalDependencies": [],
+      "externalPrerequisites": []
     }
   ],
   "pullRequests": [
@@ -204,7 +294,7 @@
       "state": "open",
       "draft": false,
       "createdAt": "2026-10-13T17:52:56.000Z",
-      "updatedAt": "2026-11-02T00:43:40.000Z",
+      "updatedAt": "2026-11-02T00:44:07.000Z",
       "closedAt": null,
       "mergedAt": null,
       "headSha": "b91347b5eb592575156efd378f8df49ae4593867",
@@ -393,4 +483,3 @@
     }
   ]
 }
-
