@@ -1,8 +1,92 @@
+import { createHash } from 'node:crypto';
 import { assertObject, createStation, id, ContractError } from './contracts.mjs';
 import { buildStationRotation, radioPositionAt } from './rotation.mjs';
 
 const DIGEST = /^sha256:[a-f0-9]{64}$/;
 const FIELDS = Object.freeze(['tenantId', 'stationId', 'segmentRef', 'assetRef', 'ciphertextSha256']);
+const ROOT_FIELDS = Object.freeze(['stationId', 'tenantId', 'schedule', 'assets']);
+
+function integer(value, field, minimum = 0) {
+  if (!Number.isSafeInteger(value) || value < minimum) throw new ContractError('Invalid ' + field);
+  return value;
+}
+
+function exactFields(value, fields, name) {
+  assertObject(value, name);
+  const names = Object.keys(value);
+  if (names.length !== fields.length || names.some(field => !fields.includes(field)) ||
+      Object.values(Object.getOwnPropertyDescriptors(value)).some(desc => !('value' in desc)))
+    throw new ContractError('Unexpected ' + name + ' fields');
+}
+
+function sanitizeSchedule(rotation, stationId, verifyEditorialApproval, station) {
+  const source = buildStationRotation(rotation);
+  const blocks = source.blocks.map(({ effectiveAt, program }) => {
+    if (!DIGEST.test(program.digest) || !Number.isSafeInteger(program.version) || program.version < 1)
+      throw new ContractError('Unverifiable program identity');
+    if (verifyEditorialApproval && verifyEditorialApproval(program, station) !== true)
+      throw new ContractError('Program publication not approved');
+    const timeline = program.timeline.map(cue => {
+      assertObject(cue, 'program cue');
+      const safe = Object.freeze({
+        ref: id(cue.ref, 'program cue ref'),
+        role: cue.role,
+        fromMs: integer(cue.fromMs, 'cue start'),
+        toMs: integer(cue.toMs, 'cue end', 1),
+        occurrenceId: integer(cue.occurrenceId, 'cue occurrence', 1)
+      });
+      if (!['opening', 'closing', 'content', 'sponsor'].includes(safe.role))
+        throw new ContractError('Unrecognized ciphertext cue role');
+      if (safe.toMs <= safe.fromMs || safe.toMs > program.durationMs)
+        throw new ContractError('Invalid cue timing');
+      return safe;
+    });
+    const safeProgram = Object.freeze({
+      stationId,
+      version: program.version,
+      digest: program.digest,
+      durationMs: integer(program.durationMs, 'program duration', 1),
+      timeline: Object.freeze(timeline)
+    });
+    return Object.freeze({ effectiveAt: integer(effectiveAt, 'activation time'), program: safeProgram });
+  });
+  return buildStationRotation({ stationId, blocks });
+}
+
+function sanitizePrepared(prepared) {
+  exactFields(prepared, ROOT_FIELDS, 'staged station');
+  const stationId = id(prepared.stationId, 'station id');
+  const tenantId = id(prepared.tenantId, 'tenant id');
+  const schedule = sanitizeSchedule(prepared.schedule, stationId);
+  const required = new Set(schedule.blocks.flatMap(({ program }) =>
+    program.timeline.map(cue => cue.ref)));
+  if (!Array.isArray(prepared.assets) || prepared.assets.length !== required.size)
+    throw new ContractError('Every broadcast cue requires exactly one ciphertext asset');
+  const seen = new Set();
+  const assets = prepared.assets.map(raw => {
+    exactFields(raw, FIELDS, 'ciphertext publication record');
+    const item = Object.freeze({
+      tenantId: id(raw.tenantId, 'tenant id'),
+      stationId: id(raw.stationId, 'station id'),
+      segmentRef: id(raw.segmentRef, 'program cue ref'),
+      assetRef: id(raw.assetRef, 'ciphertext asset ref'),
+      ciphertextSha256: raw.ciphertextSha256
+    });
+    if (item.tenantId !== tenantId || item.stationId !== stationId)
+      throw new ContractError('Cross-tenant or cross-station ciphertext denied');
+    if (!item.assetRef.startsWith('ciphertext:') || !DIGEST.test(item.ciphertextSha256))
+      throw new ContractError('Ciphertext publication lacks encrypted asset and strong hash');
+    if (!required.has(item.segmentRef) || seen.has(item.segmentRef))
+      throw new ContractError('Duplicate or unsolicited ciphertext cue');
+    seen.add(item.segmentRef);
+    return item;
+  });
+  return Object.freeze({ stationId, tenantId, schedule, assets: Object.freeze(assets) });
+}
+
+function snapshotDigest(prepared) {
+  return 'sha256:' + createHash('sha256').update(JSON.stringify(prepared)).digest('hex');
+}
 
 /**
  * DRE-10 (stage 1): validate an already-approved radio rotation and immutable,
@@ -24,22 +108,11 @@ export function stageEncryptedRadioBroadcast({
   if (typeof verifyEditorialApproval !== 'function' ||
       typeof verifyCiphertextAvailable !== 'function')
     throw new ContractError('Trusted publication and ciphertext availability adapters required');
-  const schedule = buildStationRotation(rotation);
+  const schedule = sanitizeSchedule(rotation, checkedStation.id, verifyEditorialApproval, checkedStation);
   const required = new Set();
   for (const { program } of schedule.blocks) {
-    if (!DIGEST.test(program.digest) || !Number.isSafeInteger(program.version) || program.version < 1)
-      throw new ContractError('Unverifiable program identity');
-    if (verifyEditorialApproval(program, checkedStation) !== true)
-      throw new ContractError('Program publication not approved');
     for (const cue of program.timeline) {
-      assertObject(cue, 'program cue');
-      const ref = id(cue.ref, 'program cue ref');
-      if (!['opening', 'closing', 'content', 'sponsor'].includes(cue.role))
-        throw new ContractError('Unrecognized ciphertext cue role');
-      if (!Number.isSafeInteger(cue.fromMs) || !Number.isSafeInteger(cue.toMs) ||
-          cue.fromMs < 0 || cue.toMs <= cue.fromMs || cue.toMs > program.durationMs)
-        throw new ContractError('Invalid cue timing');
-      required.add(ref);
+      required.add(cue.ref);
     }
   }
   if (!Array.isArray(assets) || assets.length !== required.size)
@@ -48,10 +121,7 @@ export function stageEncryptedRadioBroadcast({
   const safeAssets = [];
   for (const raw of assets) {
     assertObject(raw, 'ciphertext publication record');
-    const names = Object.keys(raw);
-    if (names.length !== FIELDS.length || names.some(name => !FIELDS.includes(name)) ||
-        Object.values(Object.getOwnPropertyDescriptors(raw)).some(desc => !('value' in desc)))
-      throw new ContractError('Only public ciphertext identifiers and hashes are permitted');
+    exactFields(raw, FIELDS, 'ciphertext publication record');
     const item = Object.freeze({
       tenantId: id(raw.tenantId, 'tenant id'),
       stationId: id(raw.stationId, 'station id'),
@@ -79,12 +149,12 @@ export function stageEncryptedRadioBroadcast({
       }) !== true) throw new ContractError('Required ciphertext unavailable or unverified');
     }
   }
-  return Object.freeze({
+  return sanitizePrepared(Object.freeze({
     stationId: checkedStation.id,
     tenantId: checkedStation.tenantId,
     schedule,
     assets: Object.freeze(safeAssets)
-  });
+  }));
 }
 
 /**
@@ -129,3 +199,93 @@ export function encryptedRadioCueAt(prepared, nowMs, {
     ciphertextSha256: item.ciphertextSha256
   });
 }
+
+/**
+ * Development/test state adapter for the DRE-10 persistence contract. A
+ * production adapter must provide the same atomic publish/claim/read behavior
+ * using durable storage. The adapter stores only the sanitized public schedule,
+ * opaque ciphertext references and hashes.
+ */
+export function createMemoryStationOperationsStore() {
+  const records = new Map();
+  return Object.freeze({
+    publish(prepared, { expectedRevision, atMs }) {
+      const safe = sanitizePrepared(prepared);
+      integer(expectedRevision, 'expected revision');
+      integer(atMs, 'publication time');
+      const prior = records.get(safe.stationId);
+      const revision = prior?.revision ?? 0;
+      if (revision !== expectedRevision) throw new ContractError('Station publication revision conflict');
+      const record = {
+        prepared: safe,
+        digest: snapshotDigest(safe),
+        revision: revision + 1,
+        publishedAt: atMs,
+        nextFence: (prior?.nextFence ?? 0) + 1,
+        lease: null
+      };
+      records.set(safe.stationId, record);
+      return Object.freeze({ stationId: safe.stationId, digest: record.digest,
+        revision: record.revision, publishedAt: record.publishedAt });
+    },
+    claim({ stationId, workerId, atMs, ttlMs }) {
+      stationId = id(stationId, 'station id');
+      workerId = id(workerId, 'worker id');
+      integer(atMs, 'lease time');
+      integer(ttlMs, 'lease duration', 1);
+      const record = records.get(stationId);
+      if (!record) throw new ContractError('Station publication not found');
+      if (record.lease && record.lease.expiresAt > atMs && record.lease.workerId !== workerId)
+        throw new ContractError('Station already has an active worker');
+      const fencingToken = record.nextFence++;
+      record.lease = Object.freeze({ workerId, fencingToken, expiresAt: atMs + ttlMs,
+        revision: record.revision, digest: record.digest });
+      return record.lease;
+    },
+    read({ stationId, workerId, fencingToken, atMs }) {
+      stationId = id(stationId, 'station id');
+      workerId = id(workerId, 'worker id');
+      integer(fencingToken, 'fencing token', 1);
+      integer(atMs, 'lease read time');
+      const record = records.get(stationId);
+      const lease = record?.lease;
+      if (!lease || lease.workerId !== workerId || lease.fencingToken !== fencingToken ||
+          lease.expiresAt <= atMs || lease.revision !== record.revision || lease.digest !== record.digest)
+        throw new ContractError('Missing, expired or fenced station lease');
+      return record.prepared;
+    }
+  });
+}
+
+/**
+ * Runtime facade over an atomic state-store adapter. Recreating the facade with
+ * the same durable adapter recovers the approved fixed schedule; a newer lease
+ * fences every stale worker before it can return a cue.
+ */
+export function createEncryptedStationRuntime({
+  store, workerId, leaseTtlMs, verifyPlayoutRights, verifyCiphertextAvailable
+}) {
+  if (!store || typeof store.publish !== 'function' || typeof store.claim !== 'function' ||
+      typeof store.read !== 'function') throw new ContractError('Atomic station state store required');
+  workerId = id(workerId, 'worker id');
+  integer(leaseTtlMs, 'lease duration', 1);
+  if (typeof verifyPlayoutRights !== 'function' || typeof verifyCiphertextAvailable !== 'function')
+    throw new ContractError('Fresh broadcast-rights and asset authorization required');
+  return Object.freeze({
+    publish(prepared, { expectedRevision = 0, atMs } = {}) {
+      return store.publish(sanitizePrepared(prepared), { expectedRevision, atMs });
+    },
+    claim(stationId, atMs) {
+      return store.claim({ stationId, workerId, atMs, ttlMs: leaseTtlMs });
+    },
+    cueAt(stationId, lease, atMs) {
+      assertObject(lease, 'station lease');
+      const prepared = store.read({ stationId, workerId,
+        fencingToken: lease.fencingToken, atMs });
+      return encryptedRadioCueAt(prepared, atMs, {
+        verifyPlayoutRights, verifyCiphertextAvailable
+      });
+    }
+  });
+}
+
