@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   ContractError, buildStationRotation, createStation,
-  stageEncryptedRadioBroadcast, encryptedRadioCueAt
+  stageEncryptedRadioBroadcast, encryptedRadioCueAt,
+  createMemoryStationOperationsStore, createEncryptedStationRuntime
 } from '../src/index.mjs';
 
 const digest = n => 'sha256:' + String(n).repeat(64);
@@ -117,3 +118,70 @@ test('a malformed or non-editorial program never starts a station', () => {
   };
   assert.throws(() => stage({ rotation: wrongRole }), ContractError);
 });
+
+const runtime = (store, workerId, overrides = {}) => createEncryptedStationRuntime({
+  store, workerId, leaseTtlMs: 1000,
+  verifyPlayoutRights: () => true,
+  verifyCiphertextAvailable: () => true,
+  ...overrides
+});
+
+test('fixed publication survives worker restart without an artist device', () => {
+  const store = createMemoryStationOperationsStore();
+  const first = runtime(store, 'relay-a');
+  const published = first.publish(stage(), { expectedRevision: 0, atMs: 10000 });
+  assert.equal(published.revision, 1);
+  assert.match(published.digest, /^sha256:[a-f0-9]{64}$/);
+  const firstLease = first.claim('station', 11000);
+  assert.equal(first.cueAt('station', firstLease, 11750).segmentRef, 'music');
+
+  const recovered = runtime(store, 'relay-b');
+  const recoveredLease = recovered.claim('station', 14000);
+  assert.equal(recovered.cueAt('station', recoveredLease, 14750).cycle, 1);
+});
+
+test('lease takeover fences a stale relay and publication uses optimistic revisions', () => {
+  const store = createMemoryStationOperationsStore();
+  const first = runtime(store, 'relay-a');
+  first.publish(stage(), { expectedRevision: 0, atMs: 10000 });
+  const staleLease = first.claim('station', 11000);
+  assert.throws(() => runtime(store, 'relay-b').claim('station', 11500), ContractError);
+
+  const replacement = runtime(store, 'relay-b');
+  const currentLease = replacement.claim('station', 12000);
+  assert.throws(() => first.cueAt('station', staleLease, 12001), ContractError);
+  assert.equal(replacement.cueAt('station', currentLease, 12001).stationId, 'station');
+  assert.throws(() => replacement.publish(stage(), { expectedRevision: 0, atMs: 12002 }), ContractError);
+  assert.equal(replacement.publish(stage(), { expectedRevision: 1, atMs: 12002 }).revision, 2);
+  assert.throws(() => replacement.cueAt('station', currentLease, 12003), ContractError);
+});
+
+test('operational snapshots strip program extras and reject secret-bearing stored records', () => {
+  const unsafeRotation = buildStationRotation({
+    stationId: 'station', blocks: [{ effectiveAt: 10000, program: {
+      ...program(), decryptionKey: 'not-stored', timeline: program().timeline.map(cue =>
+        ({ ...cue, plaintext: 'not-stored' }))
+    } }]
+  });
+  const staged = stage({ rotation: unsafeRotation });
+  const serialized = JSON.stringify(staged);
+  assert.doesNotMatch(serialized, /decryptionKey|plaintext|not-stored/);
+
+  const store = createMemoryStationOperationsStore();
+  const forged = { ...staged, privateManifest: 'forbidden' };
+  assert.throws(() => runtime(store, 'relay-a').publish(forged,
+    { expectedRevision: 0, atMs: 10000 }), ContractError);
+});
+
+test('expired leases and live revocation fail closed after recovery', () => {
+  const store = createMemoryStationOperationsStore();
+  const publishing = runtime(store, 'relay-a');
+  publishing.publish(stage(), { expectedRevision: 0, atMs: 10000 });
+  const lease = publishing.claim('station', 11000);
+  assert.throws(() => publishing.cueAt('station', lease, 12000), ContractError);
+
+  const denied = runtime(store, 'relay-b', { verifyPlayoutRights: () => false });
+  const deniedLease = denied.claim('station', 12000);
+  assert.throws(() => denied.cueAt('station', deniedLease, 12001), ContractError);
+});
+
