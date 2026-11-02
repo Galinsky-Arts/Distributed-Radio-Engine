@@ -1,7 +1,7 @@
 # DRE-10 incremental acceptance: ciphertext-only station playout
 
-This change adds a **portable, deterministic playout gate**, not a production
-station server or a completed DRE-10 milestone.
+This change adds a **portable, deterministic playout and recovery contract**,
+not a production station server or a completed DRE-10 milestone.
 
 - Broadcaster approves and compiles a revision using the existing editorial and
   rights system, and publishes independently encrypted media at an authorized
@@ -16,6 +16,13 @@ station server or a completed DRE-10 milestone.
   per-listener tracks.
 - **Every individual cue** requires fresh playout-right and ciphertext
   availability authorization; revocation and missing content fail closed.
+- An atomic state-store boundary persists sanitized fixed-version schedules,
+  uses optimistic publication revisions and issues expiring fencing tokens.
+  Restarting a worker against the same adapter recovers the shared timeline;
+  expired, superseded and stale-worker leases cannot return a cue.
+- The bundled memory store is a deterministic development adapter only. A
+  production store must provide the same atomic semantics with durable storage,
+  distributed time and operational recovery evidence.
 - Independent adapters must validate signatures, actual asset hashes, rights,
   device authorization, encrypted asset storage and durable operation. Tests
   use stubbed trusted adapters solely to validate this boundary.
@@ -30,9 +37,10 @@ npm run check
 ## Remaining DRE-10 acceptance gates
 
 1. Build and operate an actual always-on scheduled ciphertext service and
-   durable publication/expiry store, including distributed clock and recovery.
-2. Exercise a real publisher offline / restart / stale-lease / failed-relay
-   rehearsal, verifying no mobile app remains necessary.
+   production state-store adapter, including distributed clock and recovery.
+2. Exercise a deployed publisher-offline / restart / stale-lease / failed-relay
+   rehearsal, verifying no mobile app remains necessary. Portable simulations
+   now cover these transitions but are not operational evidence.
 3. Integrate the approved endpoint encryption and storage/delivery contracts
    from Distributed Audio Engine, with no decryption authority on the relay.
 4. Demonstrate real rights expiry, revoked publisher, corrupt-asset recovery,
@@ -41,3 +49,4 @@ npm run check
 
 Never mark a test double as actual ciphertext availability, native player
 readiness or independent security acceptance.
+
