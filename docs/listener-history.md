@@ -22,3 +22,11 @@ authenticated lifetime counts for future DRE-21 eligibility. It stores
 metadata only, no decrypted media, raw ambient sound, location, or secrets.
 Actual DRE-11 endpoint identity and DRE-15 completion authority remain to
 be integrated; browser/native live authentication is not asserted here.
+
+November 9 review adds authoritative clock and six-hour duration bounds, a bounded
+history cursor, and exact authorized occurrence lookup for the grant issuer.
+The ephemeral completion preview is capacity-bounded and never marks a declared
+speaker route as speaker-point eligibility. Actual durable history includes
+headphones for Grooves and still awards zero speaker points. The trusted approved
+playback verifier remains mandatory; no raw measurement or verification proof is
+persisted or disclosed by history reads.

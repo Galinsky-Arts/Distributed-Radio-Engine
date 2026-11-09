@@ -21,11 +21,11 @@ function decision(verify,record,scope) {
  * The SQLite store cannot determine whether physical audio actually played.
  */
 export class DurableListenerCompletion {
-  #db;#scope;#verify;#read;
-  constructor(path,{scope,verifyCompletion,authorizeRead,allowMemory=false}={}) {
+  #db;#scope;#verify;#read;#now;
+  constructor(path,{scope,verifyCompletion,authorizeRead,now=Date.now,allowMemory=false}={}) {
     assertObject(scope,'listener scope');
     this.#scope=Object.freeze(Object.fromEntries(SCOPE.map(k=>[k,id(scope[k],k)])));
-    if(typeof verifyCompletion!=='function'||typeof authorizeRead!=='function')
+    if(typeof verifyCompletion!=='function'||typeof authorizeRead!=='function'||typeof now!=='function')
       throw new TypeError('Trusted listener completion and history authorizers required');
     if(path===':memory:') {
       if(!allowMemory)throw new TypeError('Volatile completion history requires test opt-in');
@@ -51,7 +51,7 @@ export class DurableListenerCompletion {
       db.exec("CREATE TABLE IF NOT EXISTS radio_listener_completions(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,station_id TEXT NOT NULL,listener_id TEXT NOT NULL,creator_id TEXT NOT NULL,occurrence_id TEXT NOT NULL,program_digest TEXT NOT NULL,route TEXT NOT NULL CHECK(route IN ('speaker','headphones')),started_ms INTEGER NOT NULL,completed_ms INTEGER NOT NULL,required_start_ms INTEGER NOT NULL,required_end_ms INTEGER NOT NULL,PRIMARY KEY(tenant_id,application_id,listener_id,creator_id,occurrence_id)) STRICT");
       db.exec('COMMIT');
     } catch(error){try{db.exec('ROLLBACK');}catch{}db.close();throw error;}
-    this.#db=db;this.#verify=verifyCompletion;this.#read=authorizeRead;
+    this.#db=db;this.#verify=verifyCompletion;this.#read=authorizeRead;this.#now=now;
   }
   complete(input) {
     assertObject(input,'completed listener playback');
@@ -70,6 +70,9 @@ export class DurableListenerCompletion {
        record.completedAtMs<record.requiredEndMs||
        record.completedAtMs<record.startedAtMs)
       throw new RangeError('Full uninterrupted listening completion required');
+    const nowMs=this.#now();
+    if(!Number.isSafeInteger(nowMs)||nowMs<0||record.completedAtMs>nowMs||
+      record.requiredEndMs-record.requiredStartMs>6*60*60*1000)throw new RangeError('Invalid completion clock or duration');
     record.route=input.route;record.foreground=true;record.unmuted=true;record.proof=input.proof;
     Object.freeze(record);
     if(!decision(this.#verify,record,this.#scope))throw new RangeError(ERR);
@@ -100,14 +103,25 @@ export class DurableListenerCompletion {
     id(creatorId,'creatorId');
     if(typeof proof!=='string'||!proof.length||proof.length>8192||
        !Number.isSafeInteger(limit)||limit<1||limit>100||
-       (afterOccurrenceId!==null&&(typeof afterOccurrenceId!=='string'||!afterOccurrenceId.length)))
+       (afterOccurrenceId!==null&&(typeof afterOccurrenceId!=='string'||!afterOccurrenceId.length||afterOccurrenceId.length>128)))
       throw new RangeError('Bounded authenticated completion history query required');
+    if(afterOccurrenceId!==null)id(afterOccurrenceId,'completion cursor');
     const query=Object.freeze({creatorId,proof,limit,afterOccurrenceId});
     if(!decision(this.#read,query,this.#scope))throw new RangeError(ERR);
     const rows=this.#db.prepare('SELECT occurrence_id,program_digest,route,completed_ms FROM radio_listener_completions WHERE tenant_id=? AND application_id=? AND listener_id=? AND creator_id=? AND occurrence_id>? ORDER BY occurrence_id LIMIT ?')
       .all(this.#scope.tenantId,this.#scope.applicationId,this.#scope.listenerId,creatorId,afterOccurrenceId??'',limit);
     return Object.freeze(rows.map(r=>Object.freeze({creatorId,occurrenceId:r.occurrence_id,
       programDigest:r.program_digest,route:r.route,completedAtMs:r.completed_ms})));
+  }
+  readCompletion({creatorId,occurrenceId,proof}={}) {
+    id(creatorId,'creatorId');id(occurrenceId,'occurrenceId');
+    if(typeof proof!=='string'||!proof.length||proof.length>8192||
+      !decision(this.#read,Object.freeze({creatorId,occurrenceId,proof,kind:'completion'}),this.#scope))
+      throw new RangeError(ERR);
+    const row=this.#db.prepare('SELECT station_id,program_digest,route,completed_ms,required_start_ms,required_end_ms FROM radio_listener_completions WHERE tenant_id=? AND application_id=? AND listener_id=? AND creator_id=? AND occurrence_id=?')
+      .get(this.#scope.tenantId,this.#scope.applicationId,this.#scope.listenerId,creatorId,occurrenceId);
+    return row?Object.freeze({creatorId,occurrenceId,stationId:row.station_id,programDigest:row.program_digest,
+      route:row.route,completedAtMs:row.completed_ms,requiredStartMs:row.required_start_ms,requiredEndMs:row.required_end_ms}):null;
   }
   lifetimeCount({creatorId,proof}={}) {
     id(creatorId,'creatorId');
@@ -117,6 +131,7 @@ export class DurableListenerCompletion {
       throw new RangeError(ERR);
     const row=this.#db.prepare('SELECT COUNT(*) AS count FROM radio_listener_completions WHERE tenant_id=? AND application_id=? AND listener_id=? AND creator_id=?')
       .get(this.#scope.tenantId,this.#scope.applicationId,this.#scope.listenerId,creatorId);
+    if(!Number.isSafeInteger(row.count)||row.count<0)throw new RangeError('Completion count resource bound exceeded');
     return row.count;
   }
   close(){this.#db.close();}

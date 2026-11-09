@@ -70,3 +70,15 @@ test('async verifier failure cannot create a completion',async t=>{
  history.close();
  await new Promise(resolve=>setImmediate(resolve));
 });
+
+test('future completion clocks and oversized history cursors fail closed',t=>{
+ const {history}=setup(t,{now:()=>1999});t.after(()=>history.close());
+ assert.throws(()=>history.complete(entry),/clock/);
+ assert.throws(()=>history.history({creatorId:'artist',proof:'fixture',afterOccurrenceId:'x'.repeat(129)}),/Bounded/);
+});
+test('authoritative occurrence lookup is scoped and contains no verifier proof',t=>{
+ const {history}=setup(t);t.after(()=>history.close());history.complete(entry);
+ const result=history.readCompletion({creatorId:'artist',occurrenceId:'occ1',proof:'fixture'});
+ assert.equal(result.route,'headphones');assert.equal(result.stationId,'station');assert.equal(result.proof,undefined);
+ assert.equal(history.readCompletion({creatorId:'other',occurrenceId:'occ1',proof:'fixture'}),null);
+});

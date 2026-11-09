@@ -22,3 +22,9 @@ test('late joins and invalid timelines do not complete',()=>{
  assert.equal(l.complete({...base,startedAtMs:1}).complete,false);
  assert.throws(()=>l.complete({...base,completedAtMs:-1}));
 });
+
+test('a declared speaker route is not verified speaker-point eligibility',()=>{
+ const l=new ListenerCompletion({maxCompletions:1});
+ assert.equal(l.complete({...base,route:'speaker'}).speakerPointsEligible,false);
+ assert.throws(()=>l.complete({...base,occurrenceId:'other'}),/capacity/);
+});
