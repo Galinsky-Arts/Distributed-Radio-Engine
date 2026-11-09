@@ -6,14 +6,17 @@ const identity=value=>Object.freeze({principalId:id(value?.principalId,'buyer'),
  * Provider verification, storage and key enrollment are never reimplemented here.
  */
 export class WholeWorkCommerce{
- #scope;#coreScope;#checkout;#entitlements;#digest;#resolveWork;#verifyWork;#buyer;#merchant;#approve;#read;#fulfill;#now;#territory;#registry;#registered=new Map();
+ #scope;#coreScope;#checkout;#entitlements;#digest;#resolveWork;#verifyWork;#buyer;#merchant;#approve;#read;#fulfill;#now;#territory;#registry;#registered=new Map();#present;#paymentOrigins;
  constructor({scope,checkout,entitlements,commerceDigest,resolveCompleteWork,verifyCompleteWork,
-  resolveBuyer,resolveMerchant,authorizePurchase,authorizeRead,verifyFulfillment,recordingRegistry,territory,now=Date.now}={}){
+  resolveBuyer,resolveMerchant,authorizePurchase,authorizeRead,verifyFulfillment,recordingRegistry,presentPendingOrder=null,paymentOrigins=[],territory,now=Date.now}={}){
   this.#scope=Object.freeze({tenantId:id(scope?.tenantId,'tenant'),applicationId:id(scope?.applicationId,'application'),merchantId:id(scope?.merchantId,'merchant')});
   if(!['createCheckout','readOrder','registerProduct','settle'].every(k=>typeof checkout?.[k]==='function')||
    typeof entitlements?.grant!=='function'||typeof recordingRegistry?.reserve!=='function'||typeof recordingRegistry?.get!=='function'||![commerceDigest,resolveCompleteWork,verifyCompleteWork,resolveBuyer,resolveMerchant,
     authorizePurchase,authorizeRead,verifyFulfillment,now].every(fn=>typeof fn==='function')||!/^[A-Z]{2}$/.test(territory))
    throw new TypeError('DAE checkout/entitlement, complete-work, identity and transaction adapters required');
+  if((presentPendingOrder!==null&&typeof presentPendingOrder!=='function')||!Array.isArray(paymentOrigins)||paymentOrigins.length>8)throw new TypeError('Approved payment presentation origins required');
+  this.#paymentOrigins=Object.freeze(paymentOrigins.map(value=>{try{const u=new URL(value);if(u.protocol!=='https:'||u.origin!==value||u.username||u.password)throw Error();return value;}catch{throw new TypeError('HTTPS payment origin required');}}));
+  this.#present=presentPendingOrder;
   this.#coreScope=Object.freeze({tenantId:this.#scope.tenantId,application:'distributed-radio',identityId:this.#scope.merchantId});
   this.#checkout=checkout;this.#entitlements=entitlements;this.#digest=commerceDigest;this.#resolveWork=resolveCompleteWork;
   this.#verifyWork=verifyCompleteWork;this.#buyer=resolveBuyer;this.#merchant=resolveMerchant;this.#approve=authorizePurchase;
@@ -68,8 +71,18 @@ export class WholeWorkCommerce{
  async #receipt(order){
   this.#boundOrder(order,order.buyerId);
   const result={principalId:order.buyerId,tenantId:this.#scope.tenantId,applicationId:this.#scope.applicationId,
-   checkoutId:order.checkoutId,productId:order.productId,state:'PENDING',receiptId:null,fulfillmentPending:false};
-  if(order.status!=='settled')return Object.freeze(result);
+   checkoutId:order.checkoutId,productId:order.productId,state:'PENDING',receiptId:null,fulfillmentPending:false,checkoutUrl:null};
+  if(order.status!=='settled'){
+   if(order.status==='pending'&&this.#present){
+    const presentation=await this.#present(structuredClone(order));
+    if(presentation!==null){
+     let url;try{url=new URL(presentation.url);}catch{throw new RangeError('Invalid payment presentation');}
+     if(!this.#paymentOrigins.includes(url.origin)||url.username||url.password||presentation.url.length>4096)throw new RangeError('Unapproved payment presentation');
+     result.checkoutUrl=presentation.url;
+    }
+   }
+   return Object.freeze(result);
+  }
   const {work,digest}=await this.#work(order.productId,order.productRevision);
   if(digest!==order.productDigestHex||!order.settlementEventId||await this.#fulfill(structuredClone(order),structuredClone(work),this.#time())!==true)
    return Object.freeze({...result,fulfillmentPending:true});
