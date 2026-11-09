@@ -29,6 +29,8 @@ export class RecordingChannelRegistry {
       db.exec("CREATE TABLE IF NOT EXISTS radio_recording_channels(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,recording_id TEXT NOT NULL,creator_id TEXT NOT NULL,channel TEXT NOT NULL CHECK(channel IN ('groove','points','paid')),entry_id TEXT NOT NULL,PRIMARY KEY(tenant_id,application_id,recording_id),UNIQUE(tenant_id,application_id,channel,entry_id)) STRICT");
       db.exec("CREATE TABLE IF NOT EXISTS radio_groove_publications(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,groove_id TEXT NOT NULL,recording_id TEXT NOT NULL,creator_id TEXT NOT NULL,revision INTEGER NOT NULL CHECK(revision>=1),active INTEGER NOT NULL CHECK(active IN (0,1)),PRIMARY KEY(tenant_id,application_id,groove_id)) STRICT");
       db.exec("CREATE TABLE IF NOT EXISTS radio_groove_grants(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,grant_id TEXT NOT NULL,listener_id TEXT NOT NULL,groove_id TEXT NOT NULL,recording_id TEXT NOT NULL,creator_id TEXT NOT NULL,revision INTEGER NOT NULL CHECK(revision>=1),PRIMARY KEY(tenant_id,application_id,grant_id),UNIQUE(tenant_id,application_id,listener_id,groove_id)) STRICT");
+      db.exec('CREATE TABLE IF NOT EXISTS radio_groove_stock(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,groove_id TEXT NOT NULL,capacity INTEGER NOT NULL CHECK(capacity>=0),issued INTEGER NOT NULL CHECK(issued>=0 AND issued<=capacity),PRIMARY KEY(tenant_id,application_id,groove_id)) STRICT');
+      db.exec('CREATE TABLE IF NOT EXISTS radio_groove_opportunities(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,station_id TEXT NOT NULL,listener_id TEXT NOT NULL,opportunity_id TEXT NOT NULL,binding TEXT NOT NULL,result_json TEXT NOT NULL CHECK(json_valid(result_json)),PRIMARY KEY(tenant_id,application_id,station_id,listener_id,opportunity_id)) STRICT');
       db.exec('COMMIT');
     } catch(error){try{db.exec('ROLLBACK');}catch{}db.close();throw error;}
     this.#db=db;
@@ -99,10 +101,11 @@ export class RecordingChannelRegistry {
     } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
   }
   /** Atomic, immutable entitlement snapshot. Caller verifies the issuer beforehand. */
-  grantGroove({tenantId,applicationId,grooveId,listenerId,grantId,recordingId,creatorId,revision}) {
+  grantGroove(input) {return this.#grantGroove(input);}
+  #grantGroove({tenantId,applicationId,grooveId,listenerId,grantId,recordingId,creatorId,revision},withinTransaction=false) {
     for(const value of [tenantId,applicationId,grooveId,listenerId,grantId,recordingId,creatorId])id(value,'Groove grant identity');
     if(!Number.isSafeInteger(revision)||revision<1)throw new RangeError('Expected publication revision required');
-    this.#db.exec('BEGIN IMMEDIATE');
+    if(!withinTransaction)this.#db.exec('BEGIN IMMEDIATE');
     try {
       const current=this.getGroove({tenantId,applicationId,grooveId});
       const old=this.#db.prepare('SELECT * FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND grant_id=?')
@@ -112,7 +115,7 @@ export class RecordingChannelRegistry {
         if(!current||old.recording_id!==current.recordingId||
             old.creator_id!==current.creatorId||old.revision>current.revision)
           throw new RangeError('Corrupt immutable entitlement binding');
-        this.#db.exec('COMMIT');
+        if(!withinTransaction)this.#db.exec('COMMIT');
         return Object.freeze({tenantId,applicationId,grantId,listenerId,grooveId,
           recordingId:old.recording_id,creatorId:old.creator_id,revision:old.revision});
       }
@@ -122,12 +125,17 @@ export class RecordingChannelRegistry {
       const existing=this.#db.prepare('SELECT grant_id FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? AND groove_id=?')
         .get(tenantId,applicationId,listenerId,grooveId);
       if(existing)throw new RangeError('Listener entitlement already issued under another grant');
+      const budget=this.#db.prepare('SELECT capacity,issued FROM radio_groove_stock WHERE tenant_id=? AND application_id=? AND groove_id=?').get(tenantId,applicationId,grooveId);
+      if(budget) {
+        if(budget.issued>=budget.capacity)throw new RangeError('Groove stock exhausted');
+        this.#db.prepare('UPDATE radio_groove_stock SET issued=issued+1 WHERE tenant_id=? AND application_id=? AND groove_id=?').run(tenantId,applicationId,grooveId);
+      }
       this.#db.prepare('INSERT INTO radio_groove_grants VALUES(?,?,?,?,?,?,?,?)')
         .run(tenantId,applicationId,grantId,listenerId,grooveId,current.recordingId,current.creatorId,current.revision);
-      this.#db.exec('COMMIT');
+      if(!withinTransaction)this.#db.exec('COMMIT');
       return Object.freeze({tenantId,applicationId,grantId,listenerId,grooveId,
         recordingId:current.recordingId,creatorId:current.creatorId,revision:current.revision});
-    } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+    } catch(error) {if(!withinTransaction){try{this.#db.exec('ROLLBACK');}catch{}}throw error;}
   }
   readGrooveEntitlements({tenantId,applicationId,listenerId,limit=100,afterGrantId=null}) {
     for(const value of [tenantId,applicationId,listenerId])id(value,'Entitlement scope');
@@ -142,6 +150,64 @@ export class RecordingChannelRegistry {
         return Object.freeze({grantId:row.grant_id,grooveId:row.groove_id,
           recordingId:row.recording_id,creatorId:row.creator_id,revision:row.revision});
       }));
+  }
+  configureGrooveStock({tenantId,applicationId,grooveId,creatorId,capacity},authorize) {
+    for(const value of [tenantId,applicationId,grooveId,creatorId])id(value,'Groove stock scope');
+    if(!Number.isSafeInteger(capacity)||capacity<0||capacity>1000000||typeof authorize!=='function')throw new RangeError('Invalid Groove stock budget');
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const current=this.getGroove({tenantId,applicationId,grooveId});
+      if(!current?.active||current.creatorId!==creatorId||authorize(current)!==true)throw new RangeError('Groove stock authorization denied');
+      const issued=this.#db.prepare('SELECT COUNT(*) AS count FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND groove_id=?').get(tenantId,applicationId,grooveId).count;
+      if(capacity<issued)throw new RangeError('Groove capacity below issued entitlements');
+      this.#db.prepare('INSERT INTO radio_groove_stock VALUES(?,?,?,?,?) ON CONFLICT(tenant_id,application_id,groove_id) DO UPDATE SET capacity=excluded.capacity,issued=excluded.issued').run(tenantId,applicationId,grooveId,capacity,issued);
+      this.#db.exec('COMMIT');return Object.freeze({capacity,issued,remaining:capacity-issued});
+    }catch(error){try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+  }
+  readGrooveOpportunity({tenantId,applicationId,stationId,listenerId,opportunityId}) {
+    const params=[tenantId,applicationId,stationId,listenerId,opportunityId];for(const value of params)id(value,'opportunity scope');
+    const row=this.#db.prepare('SELECT binding,result_json FROM radio_groove_opportunities WHERE tenant_id=? AND application_id=? AND station_id=? AND listener_id=? AND opportunity_id=?').get(...params);
+    return row?Object.freeze({binding:row.binding,result:Object.freeze(JSON.parse(row.result_json))}):null;
+  }
+  /** Outcome tombstone, stock and entitlement are one transaction. No reroll. */
+  claimGrooveOpportunity(input,authorize) {
+    const {tenantId,applicationId,stationId,listenerId,opportunityId,binding,grooveId,grantId,creatorId,audit}=input;
+    for(const value of [tenantId,applicationId,stationId,listenerId,opportunityId,grooveId,grantId,creatorId])id(value,'opportunity identity');
+    if(typeof binding!=='string'||!/^sha256:[a-f0-9]{64}$/.test(binding)||typeof authorize!=='function')throw new TypeError('Bounded immutable opportunity binding required');
+    if(!audit||!Number.isSafeInteger(audit.tier)||audit.tier<0||audit.tier>127||
+      !Number.isSafeInteger(audit.policyVersion)||audit.policyVersion<1||!Number.isSafeInteger(audit.atMs)||audit.atMs<0||
+      !['seedCommitment','weightsCommitment','contextCommitment'].every(k=>typeof audit[k]==='string'&&/^[a-f0-9]{64}$/.test(audit[k])))
+      throw new TypeError('Bounded grant audit projection required');
+    const safeAudit=Object.fromEntries(['tier','policyVersion','atMs','seedCommitment','weightsCommitment','contextCommitment'].map(k=>[k,audit[k]]));
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const old=this.readGrooveOpportunity(input);
+      if(old) {
+        if(old.binding!==binding)throw new RangeError('Conflicting opportunity replay');
+        this.#db.exec('COMMIT');return old.result;
+      }
+      const current=this.getGroove({tenantId,applicationId,grooveId});
+      if(!current?.active||current.creatorId!==creatorId||authorize(current)!==true)throw new RangeError('Groove grant authorization denied');
+      const owned=this.#db.prepare('SELECT grant_id FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? AND groove_id=?').get(tenantId,applicationId,listenerId,grooveId);
+      const budget=this.#db.prepare('SELECT capacity,issued FROM radio_groove_stock WHERE tenant_id=? AND application_id=? AND groove_id=?').get(tenantId,applicationId,grooveId);
+      let grant=null,state;
+      if(owned)state='already-owned';
+      else if(!budget||budget.issued>=budget.capacity)state='stock-exhausted';
+      else {
+        grant=this.#grantGroove({tenantId,applicationId,grooveId,listenerId,grantId,
+          recordingId:current.recordingId,creatorId,revision:current.revision},true);
+        state='granted';
+      }
+      const result=Object.freeze({opportunityId,stationId,listenerId,creatorId,grooveId,state,grant,...safeAudit});
+      this.#db.prepare('INSERT INTO radio_groove_opportunities VALUES(?,?,?,?,?,?,?)').run(tenantId,applicationId,stationId,listenerId,opportunityId,binding,JSON.stringify(result));
+      this.#db.exec('COMMIT');return result;
+    }catch(error){try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+  }
+  readGrooveGrant({tenantId,applicationId,listenerId,grantId}) {
+    for(const value of [tenantId,applicationId,listenerId,grantId])id(value,'grant scope');
+    const row=this.#db.prepare('SELECT * FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? AND grant_id=?').get(tenantId,applicationId,listenerId,grantId);
+    return row?Object.freeze({tenantId,applicationId,listenerId,grantId,grooveId:row.groove_id,
+      recordingId:row.recording_id,creatorId:row.creator_id,revision:row.revision}):null;
   }
   close(){this.#db.close();}
 }

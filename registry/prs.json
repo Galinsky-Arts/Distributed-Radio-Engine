@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 3,
-  "observedAt": "2026-11-09T22:41:10Z",
+  "observedAt": "2026-11-09T22:59:06Z",
   "units": [
     {
       "id": "DRE-01",
@@ -384,7 +384,9 @@
       "id": "DRE-23",
       "title": "Groove grant ledger and secure delivery",
       "origin": "addition",
-      "prs": [],
+      "prs": [
+        32
+      ],
       "dependsOn": [
         "DRE-19",
         "DRE-20",
@@ -484,19 +486,34 @@
   ],
   "pullRequests": [
     {
+      "id": 5232581906,
+      "number": 32,
+      "title": "DRE-23: Durable Groove outcomes and endpoint entitlements",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/32",
+      "state": "open",
+      "draft": true,
+      "createdAt": "2026-11-09T22:57:12Z",
+      "updatedAt": "2026-11-09T22:57:12Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "e530debc838b9cda63a4a7dc40e91668961cc150",
+      "baseRef": "main",
+      "mergeCommitSha": "6027a1e1bf24d20dbc7df2bd8ff193cb8ba3e120"
+    },
+    {
       "id": 5232374725,
       "number": 31,
       "title": "DRE-18: Atomic point rewards and entitlement issuance",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/31",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-11-09T22:39:59Z",
-      "updatedAt": "2026-11-09T22:39:59Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "1c2dfbdfc0ff75b4073f6bf1e2a4cdfb575d382c",
+      "updatedAt": "2026-11-09T22:42:26Z",
+      "closedAt": "2026-11-09T22:42:26Z",
+      "mergedAt": "2026-11-09T22:42:26Z",
+      "headSha": "f7e2af80bec7ef08962ff079bd3691eff9b097f1",
       "baseRef": "main",
-      "mergeCommitSha": "a3960ac241a0d49373bd941ee8d96c7fa862cc1c"
+      "mergeCommitSha": "aabd242f31da59658d75dc61f3bb85c1d7d79d5b"
     },
     {
       "id": 4941650396,
@@ -533,45 +550,45 @@
       "number": 28,
       "title": "DRE-22: Listener completion progress including headphones",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/28",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-10-18T22:14:20Z",
-      "updatedAt": "2026-11-01T18:13:06Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "2b2f668738996580de6007b9ea38b79824213e1f",
+      "updatedAt": "2026-11-09T22:56:54Z",
+      "closedAt": "2026-11-09T22:56:54Z",
+      "mergedAt": "2026-11-09T22:56:54Z",
+      "headSha": "d619680712e6f28bdec29f77449682284c28cb4c",
       "baseRef": "main",
-      "mergeCommitSha": "154f64608cf9c09bf478dc99ff351c27690f3633"
+      "mergeCommitSha": "6800f5ad3d32758bb76473b000dcf2d47357dcd1"
     },
     {
       "id": 4913289647,
       "number": 27,
       "title": "DRE-21: Exponential rarity and fair eligibility",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/27",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-10-18T22:13:33Z",
-      "updatedAt": "2026-11-01T18:11:12Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "375ab247a73f55e0e3ac917c6b7cf7c1960f66a0",
+      "updatedAt": "2026-11-09T22:49:40Z",
+      "closedAt": "2026-11-09T22:49:40Z",
+      "mergedAt": "2026-11-09T22:49:40Z",
+      "headSha": "1b1fcc2751e58900dc3305dfc861d7e7e70214e2",
       "baseRef": "main",
-      "mergeCommitSha": "da40a491a7c1def2ca09fde670e5fe41b409d45a"
+      "mergeCommitSha": "3aa3a5d107a26f7be49bfe050a9105f5442b48ef"
     },
     {
       "id": 4913284374,
       "number": 26,
       "title": "DRE-20: Shared transition opportunity scheduler",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/26",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-10-18T22:12:46Z",
-      "updatedAt": "2026-11-01T18:09:00Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "59b091938211a6e693b8eb842ce83e7951ea02d8",
+      "updatedAt": "2026-11-09T22:48:16Z",
+      "closedAt": "2026-11-09T22:48:16Z",
+      "mergedAt": "2026-11-09T22:48:16Z",
+      "headSha": "edd346f10bdddd6a5c5e3a185fc7aa53b7713a90",
       "baseRef": "main",
-      "mergeCommitSha": "5e776639c15031ef4fe4ff1778dbbbea749f17db"
+      "mergeCommitSha": "e6eba9b295aa5a043fe2ddcdfe809b7a0103eefc"
     },
     {
       "id": 4913278983,
