@@ -2,6 +2,9 @@
 
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
+**DRE-17 price contract:** [versioned gentle/exponential reward ladder](docs/reward-price-ladder.md)
+supports unbounded mathematical tiers, exact bounded quotes, symbolic fallback
+and creator-approved immutable prices. It does not authorize a spend.
 **DRE-16 wallet boundary:** [durable scoped point accounting](docs/point-ledger.md)
 uses authenticated receipt consumption, atomic balances/audit, constrained
 reversals and concurrent-spend protection. Real producer integration and release
