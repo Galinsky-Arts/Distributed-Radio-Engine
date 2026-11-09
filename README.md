@@ -2,6 +2,9 @@
 
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
+**DRE-15 completion gate:** [authenticated durable vesting receipts](docs/vesting-receipts.md)
+bind the matching outro and persist unique occurrence decisions across restarts
+and concurrent processes. Wallet settlement remains explicitly pending.
 **DRE-14 preview contract:** [authenticated provisional progress](docs/provisional-progress.md)
 uses a scoped producer verifier, nonoverlapping exact windows and terminal
 interruption tombstones. It never creates spendable point credit.
