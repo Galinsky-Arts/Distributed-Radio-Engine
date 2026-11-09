@@ -174,7 +174,7 @@ Gate: Software.
 
 ## DRE-18 — Points reward catalog and atomic redemption
 
-Dependencies: DRE-05, DRE-16, DRE-17. Origin: added.
+Dependencies: DRE-05, DRE-16, DRE-17, DRE-19. Origin: added.
 
 Creator-defined points offers, coupons, recordings and other lawful fan rewards; cost/budget/stock and atomic entitlement issuance.
 
