@@ -6,6 +6,15 @@
 The one-argument status-flag prototype is replaced by an explicit authenticated
 verifier boundary with deduplication/overlap checks. Software fixtures do not
 constitute calibrated-device evidence or authorize spendable point grants.
+**DRE-12 contribution software:** [policy, exact units and authenticated evidence
+boundary](docs/contribution-policy.md). Integer conservative energy equivalents
+remain provisional; real playback/evidence integration and later settlement gates
+are separate. `npm run check` exercises the fixture-based software acceptance.
+**DRE-11 SDK work:** [linear-radio playback facade](docs/radio-playback-sdk.md)
+provides transport-neutral web/native lifecycle adapters, current-station joins,
+bounded ciphertext backpressure and recovery. `npm run check` exercises software
+fixtures; actual DRE-10 station/endpoint integration remains pending. The SDK does
+not establish keys, implement a new encryption protocol or certify live playback.
 
 # Four-project development plan
 
