@@ -9,8 +9,8 @@
   ],
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
-  "roadmapVersion": 2,
-  "observedAt": "2026-11-09T22:31:30Z",
+  "roadmapVersion": 3,
+  "observedAt": "2026-11-09T22:41:10Z",
   "units": [
     {
       "id": "DRE-01",
@@ -298,11 +298,14 @@
       "id": "DRE-18",
       "title": "Points reward catalog and atomic redemption",
       "origin": "addition",
-      "prs": [],
+      "prs": [
+        31
+      ],
       "dependsOn": [
         "DRE-05",
         "DRE-16",
-        "DRE-17"
+        "DRE-17",
+        "DRE-19"
       ],
       "externalDependencies": [],
       "externalPrerequisites": [],
@@ -481,6 +484,21 @@
   ],
   "pullRequests": [
     {
+      "id": 5232374725,
+      "number": 31,
+      "title": "DRE-18: Atomic point rewards and entitlement issuance",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/31",
+      "state": "open",
+      "draft": true,
+      "createdAt": "2026-11-09T22:39:59Z",
+      "updatedAt": "2026-11-09T22:39:59Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "1c2dfbdfc0ff75b4073f6bf1e2a4cdfb575d382c",
+      "baseRef": "main",
+      "mergeCommitSha": "a3960ac241a0d49373bd941ee8d96c7fa862cc1c"
+    },
+    {
       "id": 4941650396,
       "number": 30,
       "title": "Integrate Development Deployment Monitor (inventory-only)",
@@ -560,45 +578,45 @@
       "number": 25,
       "title": "DRE-19: Separate Unlocked Groove catalog",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/25",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-10-18T22:11:55Z",
-      "updatedAt": "2026-11-01T18:06:33Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "69aa76ebfedbad00e0ebec3dbb09d6b15963a766",
+      "updatedAt": "2026-11-09T22:38:52Z",
+      "closedAt": "2026-11-09T22:38:52Z",
+      "mergedAt": "2026-11-09T22:38:52Z",
+      "headSha": "bb88d07061d5c4ee1f43dc9932c5449c3396f155",
       "baseRef": "main",
-      "mergeCommitSha": "9c6321a5d299d120af345259b830fa7105f04a17"
+      "mergeCommitSha": "b5a2773e9273a555816f5800255feef5ead7902d"
     },
     {
       "id": 4913271527,
       "number": 24,
       "title": "DRE-17: Default exponential reward price ladder",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/24",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-10-18T22:10:44Z",
-      "updatedAt": "2026-10-18T23:58:44Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "f6cacaeee2a357baa11fd90138ca1e1a211ff16a",
+      "updatedAt": "2026-11-09T22:35:05Z",
+      "closedAt": "2026-11-09T22:35:04Z",
+      "mergedAt": "2026-11-09T22:35:04Z",
+      "headSha": "5c6d9b245a84ee964df00c30522778ac18285261",
       "baseRef": "main",
-      "mergeCommitSha": "c1a6aa07cc316d76c0cd566da43886806da97fb4"
+      "mergeCommitSha": "dc9250c655ed8c5ca030db8f114950affae6a14a"
     },
     {
       "id": 4913266613,
       "number": 23,
       "title": "DRE-16: Creator-specific transactional point wallets",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/23",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-10-18T22:09:56Z",
-      "updatedAt": "2026-11-09T22:30:25Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "a603ee34cb19aa81eaa7abf76f019281ee221a26",
+      "updatedAt": "2026-11-09T22:33:02Z",
+      "closedAt": "2026-11-09T22:33:02Z",
+      "mergedAt": "2026-11-09T22:33:02Z",
+      "headSha": "0404819a20883f5c8a002443c93e2ca49f7a39bc",
       "baseRef": "main",
-      "mergeCommitSha": "db9e06354bcc843fea5a0d55a6975dd57b0c13d6"
+      "mergeCommitSha": "294617a31abd4b2a56267069180ea10ed35d2345"
     },
     {
       "id": 4913002751,
