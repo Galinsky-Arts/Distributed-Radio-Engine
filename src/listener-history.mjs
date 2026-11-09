@@ -53,6 +53,7 @@ export class DurableListenerCompletion {
     } catch(error){try{db.exec('ROLLBACK');}catch{}db.close();throw error;}
     this.#db=db;this.#verify=verifyCompletion;this.#read=authorizeRead;this.#now=now;
   }
+  matchesScope(scope) {return !!scope&&SCOPE.every(key=>scope[key]===this.#scope[key]);}
   complete(input) {
     assertObject(input,'completed listener playback');
     const record={};
