@@ -7,7 +7,7 @@ export function createRadioJoin({program, startedAtMs, nowMs, route, evidence}) 
   id(program.digest, 'program digest');
   if (!Number.isSafeInteger(program.version) || program.version < 1)
     throw new ContractError('Invalid program version');
-  if (!Number.isSafeInteger(startedAtMs) || !Number.isSafeInteger(nowMs) || nowMs < startedAtMs)
+  if (!Number.isSafeInteger(startedAtMs) || startedAtMs < 0 || !Number.isSafeInteger(nowMs) || nowMs < startedAtMs)
     throw new ContractError('Invalid authoritative station clock');
   if (!['web','native'].includes(route?.clientType)) throw new ContractError('Unsupported client route');
   if (!['ready','recovering','unavailable'].includes(route?.status)) throw new ContractError('Invalid route status');

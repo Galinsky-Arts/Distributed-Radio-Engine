@@ -87,10 +87,12 @@ cleanup failure, sanitized errors and recovery across cycles. Passing them does
 not prove actual web/native playback, device calibration, E2EE conformance or
 production readiness.
 
-DRE-10 PR #14 cannot currently be inspected through the assignment gateway:
-`PR_MAPPING_CONFLICT: PR is not linked to the assigned approved work unit in this
-repository`. Its autonomous encrypted station operations are absent from this
-branch's base. Integration acceptance requires that source association be
-reconciled, DRE-10 be verified, and its actual authenticated station/transport and
-authorized endpoint adapters be exercised here. No duplicate DRE-10
-implementation, new crypto protocol or fabricated live-device result is supplied.
+DRE-10 PR #14 is now merged with SQLite-backed scheduling and fenced recovery.
+The adapter contracts remain explicit: the application must supply authenticated
+station data, ciphertext transport and an authorized endpoint. No native or
+production playback acceptance is inferred from this software merge.
+
+The optional `onStatus(snapshot)` observer reports connecting, playing, stopping
+and terminal states. It enables consumer UI to follow the stream lifetime;
+`start()` still resolves only when that lifetime ends. Observer exceptions do not
+skip cleanup. It conveys no authorization or reward evidence.

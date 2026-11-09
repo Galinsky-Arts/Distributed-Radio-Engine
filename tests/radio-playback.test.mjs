@@ -219,3 +219,11 @@ test('public playback subpath exposes web/native facade without engine crypto im
   assert.equal(typeof sdk.createWebRadioPlayback,'function');
   assert.equal(typeof sdk.createNativeRadioPlayback,'function');
 });
+
+test('status observer sees playing before stream end and cannot prevent cleanup',async()=>{
+  const states=[],f=fixture({onStatus:s=>{states.push(s.state);if(s.state==='playing')throw Error('UI failure');}});
+  const result=await createRadioPlayback(f.input).start();
+  assert.deepEqual(states,['connecting','playing','unavailable']);
+  assert.equal(result.errorCode,'STATION_STREAM_ENDED');
+  assert.equal(f.closed,1);assert.equal(f.stopped,1);
+});

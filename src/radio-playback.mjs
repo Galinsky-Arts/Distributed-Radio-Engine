@@ -11,8 +11,8 @@ const publicErrors = new Set(['PLAYBACK_ADAPTER_TIMEOUT','STATION_AUTHENTICATION
  * Injected adapters are trusted application code, not remote capability claims.
  */
 export function createRadioPlayback({clientType, station, transport, endpoint,
-  now = Date.now, maxFrameBytes = 1024 * 1024, operationTimeoutMs = 10000}) {
-  if (!['web','native'].includes(clientType) || typeof now !== 'function' ||
+  now = Date.now, onStatus = () => {}, maxFrameBytes = 1024 * 1024, operationTimeoutMs = 10000}) {
+  if (!['web','native'].includes(clientType) || typeof now !== 'function' || typeof onStatus !== 'function' ||
       typeof station?.read !== 'function' || typeof station?.verify !== 'function' ||
       typeof transport?.connect !== 'function' ||
       typeof endpoint?.writeCiphertext !== 'function' || typeof endpoint?.stop !== 'function')
@@ -39,6 +39,10 @@ export function createRadioPlayback({clientType, station, transport, endpoint,
         ['connecting','recovering'].includes(state) ? 'recovering' : 'unavailable'}),
       evidence: Object.freeze({status: evidenceStatus}),
       seekable: false, onDemand: false, sealed});
+  }
+
+  function notify() {
+    try { onStatus(status()); } catch { /* UI observers cannot alter lifecycle cleanup. */ }
   }
 
   function bounded(promise) {
@@ -118,6 +122,7 @@ export function createRadioPlayback({clientType, station, transport, endpoint,
             throw new ContractError('INVALID_EVIDENCE_STATE');
           evidenceStatus = reported;
           state = 'playing';
+          notify();
         }
       } finally {
         if (typeof iterator.return === 'function')
@@ -136,6 +141,7 @@ export function createRadioPlayback({clientType, station, transport, endpoint,
       try { await bounded(close()); }
       catch { sealed = true; state = 'unavailable'; errorCode = 'PLAYBACK_CLOSE_FAILED'; }
       if (!failed && state !== 'unavailable') state = 'stopped';
+      notify();
     }
     return status();
   }
@@ -149,6 +155,7 @@ export function createRadioPlayback({clientType, station, transport, endpoint,
     join = null;
     errorCode = null;
     state = 'connecting';
+    notify();
     const task = pump();
     running = task.finally(() => { running = null; });
     return running;
@@ -159,6 +166,7 @@ export function createRadioPlayback({clientType, station, transport, endpoint,
     controller.abort();
     state = 'stopping';
     evidenceStatus = 'unavailable';
+    notify();
     try {
       // Close only a connection already returned by connect. If connect is
       // pending, pump owns its eventual close before the next start is allowed.
