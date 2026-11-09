@@ -112,3 +112,23 @@ test('accepted duplicate and excluded census reconciles to all submitted entries
   assert.equal(result.acceptedWindows+result.duplicateWindows+excluded,entries.length);
 });
 
+
+import {createContributionPolicy,measureVerifiedContribution} from '../src/contribution-policy.mjs';
+test('calibrated policy decisions compose into independently deduplicated speaker totals',()=>{
+  const scope={tenantId:'tenant',applicationId:'app',stationId:'station',creatorId:'creator',occurrenceId:'occurrence'};
+  const policy=createContributionPolicy({version:1,thresholdDb:50,referenceDb:60,ceilingDb:80,maxWindowMs:1000,geometryId:'geometry'});
+  const decisions=new Map();
+  const entries=['output-a','output-b'].map((physicalOutputId,i)=>{
+    const decision=measureVerifiedContribution({policy,scope,nowMs:2000,verifyEvidence:()=>true,
+      claims:{...scope,physicalOutputId,windowId:'window-'+i,issuerId:'issuer',calibrationId:'calibration',
+        geometryId:'geometry',weighting:'A',fromMs:1000,toMs:2000,calibratedAtMs:0,calibrationExpiresAtMs:3000,
+        policyVersion:1,measuredDb:60,uncertaintyDb:0,route:'speaker',muted:false,proof:'fixture'}});
+    decisions.set(physicalOutputId,decision);
+    return {...decision,issuerId:'issuer',route:'speaker',status:'verified',outputKind:'physical',
+      microPoints:decision.points,proof:'fixture'};
+  });
+  const result=aggregateSpeakerEvidence([...entries,entries[0]],{scope,fromMs:1000,toMs:2000,policyVersion:1,
+    verifyEvidence:e=>decisions.get(e.physicalOutputId)?.points===e.microPoints});
+  assert.equal(result.microPoints,2000000n);assert.equal(result.verifiedOutputs,2);
+  assert.equal(result.duplicateWindows,1);assert.equal(result.spendable,false);
+});
