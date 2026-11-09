@@ -1,43 +1,35 @@
-# Distributed Radio Engine — implementation and release evidence
+# Distributed Radio Engine — implementation and evidence
 
-This page tracks implementation *in this repository*, separately from the upstream Distributed Audio Engine status.
+November 9, 2026 software checkpoint. Live GitHub PRs and their exact tested
+heads are authoritative; `registry/prs.json` records dated observations.
 
-## DRE-11 branch checkpoint — 2026-10-18
+DRE-01–DRE-15 have merged development implementations. They cover scoped station
+roles, catalog and publishing rights, common editorial programs, identifications,
+sponsors, durable ciphertext-only scheduling, a web/native playback facade,
+conservative contribution arithmetic, physical-output deduplication, provisional
+progress and durable full-outro receipts. DRE-16 adds durable creator-specific
+wallets and receipt-to-wallet integration. These are software boundaries with
+explicit trusted adapters, not a deployed station or verified loudspeaker network.
 
-PR #18 adds the public `./playback` and `./join` subpaths, a web/native endpoint
-adapter lifecycle, mandatory station-verification callback, bounded one-frame
-ciphertext backpressure, abort/cleanup fencing, current-clock recovery and
-allowlisted public status/errors. Local `npm run check` passes **75 tests** and
-the roadmap validator on Node **24.19.0**. GitHub CI uses Node 22; exact-head CI
-must be inspected separately after commit. Test adapters are explicit fixtures,
-not native/browser streaming or hardware evidence.
+Local checks cover process-exit SQLite recovery, multiple connections/processes,
+stale-worker fencing, publication conflicts, replay, interruption forfeiture,
+creator separation, exact arithmetic and ledger reconciliation. The wallet
+integration uses an actual reopened receipt database and rejects altered or
+missing receipts. Hosted checks must pass at the exact PR head before merge.
 
-Remaining unit acceptance is the real DRE-10 authenticated station/transport and
-authorized endpoint integration. Gateway evidence for imported DRE-10 PR #14
-currently returns `PR_MAPPING_CONFLICT`; the source registry has no numeric
-association. No duplicate PR or alternative-connector workaround is authorized.
-Keep PR #18 draft until integration acceptance and current-head checks pass.
-See [the SDK contract and limits](radio-playback-sdk.md).
+## Remaining integration
 
-The table below is the initial historical baseline and does not supersede live
-GitHub/registry evidence or the branch-specific checkpoint above.
+- Production identity/device enrollment, authenticated endpoint bootstrap,
+  ciphertext relay deployment and actual browser/native media playback.
+- Calibrated physical-source attribution, route/device qualification, audible
+  interruption latency, battery and long-duration field tests.
+- DRE-17 onward: versioned reward pricing, atomic point redemptions, separate
+  bonus catalog, shared transitions, completion/grants, commerce and reporting.
+- Provider-backed fulfillment, deployed recovery/retention drills and integrated
+  pilot/release evidence. No deployment or certification is claimed.
 
-| Roadmap | Implemented | Integration | Field / independent evidence |
-| --- | --- | --- | --- |
-| DRE-01 | Portable neutral station/media contracts; test suite | Upstream DAE-23 version and consumer-install smoke **pending** | Not claimed |
-| DRE-02–DRE-28 | Planned | Not integrated | Not claimed |
-
-The neutral interfaces do not implement media encryption, keys, acoustic validation, payments or listener privacy. Those remain external dependencies or later packages. A green unit test is not authorization to publish a production radio service.
-
-## Deployment
-
-There is currently no deployed production station or listener application. Future Render preview health and readiness endpoints must explicitly describe their limited scope, and must not claim that secure streaming or verified speaker rewards are operational.
-
-## Upstream reference
-
-[Distributed Audio Engine implementation evidence](https://github.com/neophilism/Distributed-Audio-Engine/blob/main/docs/implementation-status.md).
-
-## Monitoring contract
-
-Automation should publish a build SHA, test status, deployment state and timestamp, and mark unavailable upstream/security/hardware evidence as **unknown** or **pending**, never **passed**.
-
+The canonical registry restores the dependency edges, scope and acceptance text
+from the approved 120-package source plan. Empty dependency arrays in older
+registry exports must not be interpreted as permission to skip prerequisites.
+Independent expert review remains honestly pending and deferred under AGENTS.md;
+it is not a software merge prerequisite.
