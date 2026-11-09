@@ -2,6 +2,10 @@
 
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
+**DRE-12 contribution software:** [policy, exact units and authenticated evidence
+boundary](docs/contribution-policy.md). Integer conservative energy equivalents
+remain provisional; real playback/evidence integration and later settlement gates
+are separate. `npm run check` exercises the fixture-based software acceptance.
 **DRE-11 SDK work:** [linear-radio playback facade](docs/radio-playback-sdk.md)
 provides transport-neutral web/native lifecycle adapters, current-station joins,
 bounded ciphertext backpressure and recovery. `npm run check` exercises software
