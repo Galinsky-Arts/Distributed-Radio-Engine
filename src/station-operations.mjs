@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { DatabaseSync } from 'node:sqlite';
 import { assertObject, createStation, id, ContractError } from './contracts.mjs';
 import { buildStationRotation, radioPositionAt } from './rotation.mjs';
 
@@ -21,6 +22,7 @@ function exactFields(value, fields, name) {
 
 function sanitizeSchedule(rotation, stationId, verifyEditorialApproval, station) {
   const source = buildStationRotation(rotation);
+  if (source.stationId !== stationId) throw new ContractError('Schedule station mismatch');
   const blocks = source.blocks.map(({ effectiveAt, program }) => {
     if (!DIGEST.test(program.digest) || !Number.isSafeInteger(program.version) || program.version < 1)
       throw new ContractError('Unverifiable program identity');
@@ -33,7 +35,7 @@ function sanitizeSchedule(rotation, stationId, verifyEditorialApproval, station)
         role: cue.role,
         fromMs: integer(cue.fromMs, 'cue start'),
         toMs: integer(cue.toMs, 'cue end', 1),
-        occurrenceId: integer(cue.occurrenceId, 'cue occurrence', 1)
+        occurrenceId: cue.role === 'sponsor' && cue.occurrenceId === null ? null : integer(cue.occurrenceId, 'cue occurrence', 1)
       });
       if (!['opening', 'closing', 'content', 'sponsor'].includes(safe.role))
         throw new ContractError('Unrecognized ciphertext cue role');
@@ -41,6 +43,9 @@ function sanitizeSchedule(rotation, stationId, verifyEditorialApproval, station)
         throw new ContractError('Invalid cue timing');
       return safe;
     });
+    if (timeline[0].fromMs !== 0 || timeline.at(-1).toMs !== program.durationMs ||
+        timeline.some((cue, i) => i > 0 && cue.fromMs !== timeline[i - 1].toMs))
+      throw new ContractError('Timeline must be contiguous and complete');
     const safeProgram = Object.freeze({
       stationId,
       version: program.version,
@@ -206,55 +211,106 @@ export function encryptedRadioCueAt(prepared, nowMs, {
  * using durable storage. The adapter stores only the sanitized public schedule,
  * opaque ciphertext references and hashes.
  */
-export function createMemoryStationOperationsStore() {
-  const records = new Map();
+function stationOperationsStore(records, atomic = fn => fn()) {
   return Object.freeze({
     publish(prepared, { expectedRevision, atMs }) {
-      const safe = sanitizePrepared(prepared);
-      integer(expectedRevision, 'expected revision');
-      integer(atMs, 'publication time');
-      const prior = records.get(safe.stationId);
-      const revision = prior?.revision ?? 0;
-      if (revision !== expectedRevision) throw new ContractError('Station publication revision conflict');
-      const record = {
-        prepared: safe,
-        digest: snapshotDigest(safe),
-        revision: revision + 1,
-        publishedAt: atMs,
-        nextFence: (prior?.nextFence ?? 0) + 1,
-        lease: null
-      };
-      records.set(safe.stationId, record);
-      return Object.freeze({ stationId: safe.stationId, digest: record.digest,
-        revision: record.revision, publishedAt: record.publishedAt });
+      return atomic(() => {
+        const safe = sanitizePrepared(prepared);
+        integer(expectedRevision, 'expected revision');
+        integer(atMs, 'publication time');
+        const prior = records.get(safe.stationId);
+        if (prior && (prior.prepared.tenantId !== safe.tenantId || atMs < prior.lastObservedAt))
+          throw new ContractError('Station scope or clock rollback');
+        const revision = prior?.revision ?? 0;
+        if (revision !== expectedRevision) throw new ContractError('Station publication revision conflict');
+        const record = {
+          prepared: safe,
+          digest: snapshotDigest(safe),
+          revision: integer(revision + 1, 'revision', 1),
+          lastObservedAt: atMs,
+          publishedAt: atMs,
+          nextFence: integer((prior?.nextFence ?? 0) + 1, 'next fencing token', 1),
+          lease: null
+        };
+        records.set(safe.stationId, record);
+        return Object.freeze({ stationId: safe.stationId, digest: record.digest,
+          revision: record.revision, publishedAt: record.publishedAt });
+      });
     },
     claim({ stationId, workerId, atMs, ttlMs }) {
-      stationId = id(stationId, 'station id');
-      workerId = id(workerId, 'worker id');
-      integer(atMs, 'lease time');
-      integer(ttlMs, 'lease duration', 1);
-      const record = records.get(stationId);
-      if (!record) throw new ContractError('Station publication not found');
-      if (record.lease && record.lease.expiresAt > atMs && record.lease.workerId !== workerId)
-        throw new ContractError('Station already has an active worker');
-      const fencingToken = record.nextFence++;
-      record.lease = Object.freeze({ workerId, fencingToken, expiresAt: atMs + ttlMs,
-        revision: record.revision, digest: record.digest });
-      return record.lease;
+      return atomic(() => {
+        stationId = id(stationId, 'station id');
+        workerId = id(workerId, 'worker id');
+        integer(atMs, 'lease time');
+        integer(ttlMs, 'lease duration', 1);
+        const record = records.get(stationId);
+        if (!record) throw new ContractError('Station publication not found');
+        if (atMs < record.lastObservedAt) throw new ContractError('Clock rollback');
+        integer(atMs + ttlMs, 'lease expiry', 1);
+        integer(record.nextFence + 1, 'next fencing token', 1);
+        if (record.lease && record.lease.expiresAt > atMs && record.lease.workerId !== workerId)
+          throw new ContractError('Station already has an active worker');
+        const fencingToken = record.nextFence++;
+        record.lease = Object.freeze({ workerId, fencingToken, expiresAt: atMs + ttlMs,
+          revision: record.revision, digest: record.digest });
+        record.lastObservedAt = atMs;
+        records.set(stationId, record);
+        return record.lease;
+      });
     },
     read({ stationId, workerId, fencingToken, atMs }) {
-      stationId = id(stationId, 'station id');
-      workerId = id(workerId, 'worker id');
-      integer(fencingToken, 'fencing token', 1);
-      integer(atMs, 'lease read time');
-      const record = records.get(stationId);
-      const lease = record?.lease;
-      if (!lease || lease.workerId !== workerId || lease.fencingToken !== fencingToken ||
-          lease.expiresAt <= atMs || lease.revision !== record.revision || lease.digest !== record.digest)
-        throw new ContractError('Missing, expired or fenced station lease');
-      return record.prepared;
+      return atomic(() => {
+        stationId = id(stationId, 'station id');
+        workerId = id(workerId, 'worker id');
+        integer(fencingToken, 'fencing token', 1);
+        integer(atMs, 'lease read time');
+        const record = records.get(stationId);
+        const lease = record?.lease;
+        if (record && atMs < record.lastObservedAt) throw new ContractError('Clock rollback');
+        if (!lease || lease.workerId !== workerId || lease.fencingToken !== fencingToken ||
+            lease.expiresAt <= atMs || lease.revision !== record.revision || lease.digest !== record.digest)
+          throw new ContractError('Missing, expired or fenced station lease');
+        const prepared = sanitizePrepared(record.prepared);
+        if (snapshotDigest(prepared) !== record.digest) throw new ContractError('Corrupt station snapshot');
+        record.lastObservedAt = atMs;
+        records.set(stationId, record);
+        return prepared;
+      });
     }
   });
+}
+
+/** Test adapter. Publication and runtime calls are trusted operator APIs. */
+export function createMemoryStationOperationsStore() {
+  return stationOperationsStore(new Map());
+}
+
+/** Durable single-host adapter. All instances share SQLite's writer lock.
+ * Contains only inventoried public scheduling metadata and ciphertext references.
+ * Use a trusted host clock and protect the database against snapshot rollback.
+ * It is not a distributed clock, public API or multi-region store.
+ */
+export function createSqliteStationOperationsStore(filename) {
+  if (typeof filename !== 'string' || !filename) throw new ContractError('Database filename required');
+  const db = new DatabaseSync(filename);
+  db.exec(`PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
+    CREATE TABLE IF NOT EXISTS radio_operations(station_id TEXT PRIMARY KEY, record_json TEXT NOT NULL);`);
+  const records = {
+    get(stationId) {
+      const row = db.prepare('SELECT record_json FROM radio_operations WHERE station_id=?').get(stationId);
+      return row ? JSON.parse(row.record_json) : undefined;
+    },
+    set(stationId, record) {
+      db.prepare('INSERT INTO radio_operations VALUES(?,?) ON CONFLICT(station_id) DO UPDATE SET record_json=excluded.record_json')
+        .run(stationId, JSON.stringify(record));
+    }
+  };
+  const atomic = fn => {
+    db.exec('BEGIN IMMEDIATE');
+    try { const result = fn(); db.exec('COMMIT'); return result; }
+    catch (error) { db.exec('ROLLBACK'); throw error; }
+  };
+  return Object.freeze({...stationOperationsStore(records, atomic), close() { db.close(); }});
 }
 
 /**

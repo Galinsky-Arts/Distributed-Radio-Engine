@@ -20,9 +20,14 @@ not a production station server or a completed DRE-10 milestone.
   uses optimistic publication revisions and issues expiring fencing tokens.
   Restarting a worker against the same adapter recovers the shared timeline;
   expired, superseded and stale-worker leases cannot return a cue.
-- The bundled memory store is a deterministic development adapter only. A
-  production store must provide the same atomic semantics with durable storage,
-  distributed time and operational recovery evidence.
+- `createSqliteStationOperationsStore(filename)` persists public schedule state,
+  optimistic revisions, clock high-water marks and leases with SQLite WAL, FULL
+  synchronous commits and atomic transactions. Multiple connections share writer
+  locking; process-exit recovery is tested. The memory adapter remains for tests.
+  Both are trusted operator APIs; callers must authorize publication and worker
+  access. Station IDs are globally unique and cannot change tenant. Protect the
+  database and its directory; provide a trusted clock and anti-rollback backups.
+  Multi-region storage, distributed time and deployed recovery remain unqualified.
 - Independent adapters must validate signatures, actual asset hashes, rights,
   device authorization, encrypted asset storage and durable operation. Tests
   use stubbed trusted adapters solely to validate this boundary.
@@ -37,7 +42,7 @@ npm run check
 ## Remaining DRE-10 acceptance gates
 
 1. Build and operate an actual always-on scheduled ciphertext service and
-   production state-store adapter, including distributed clock and recovery.
+   deploy the single-host state adapter, or qualify a distributed adapter and clock.
 2. Exercise a deployed publisher-offline / restart / stale-lease / failed-relay
    rehearsal, verifying no mobile app remains necessary. Portable simulations
    now cover these transitions but are not operational evidence.
@@ -50,3 +55,13 @@ npm run check
 Never mark a test double as actual ciphertext availability, native player
 readiness or independent security acceptance.
 
+
+## November 9 software review
+
+66 local radio tests pass on Node 24.22.1, including a child-process exit without
+closing SQLite, recovery with two separate connections, stale-worker fencing,
+optimistic publication conflicts, clock rollback and overflow denial. Sponsor
+cues now accept the compiler's null occurrence ID. Timeline gaps and overlaps
+are rejected before publication. No acoustic, device or deployed service
+evidence is inferred from these tests. Independent review remains deferred
+under AGENTS.md; development merge does not complete operational acceptance.

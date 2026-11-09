@@ -185,3 +185,57 @@ test('expired leases and live revocation fail closed after recovery', () => {
   assert.throws(() => denied.cueAt('station', deniedLease, 12001), ContractError);
 });
 
+
+// Real on-disk adapter integration, including separately opened connections.
+import {createSqliteStationOperationsStore} from '../src/index.mjs';
+import {mkdtempSync, rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {spawnSync} from 'node:child_process';
+
+test('SQLite publication survives process exit; concurrent connections fence stale workers', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'dre10-'));
+  const file = join(dir, 'state.sqlite');
+  let a, b;
+  try {
+    const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import {createSqliteStationOperationsStore} from './src/index.mjs';
+      const store = createSqliteStationOperationsStore(process.argv[1]);
+      store.publish(JSON.parse(process.argv[2]), {expectedRevision:0, atMs:10000});
+      process.exit(0); // No close: committed WAL state must recover.
+    `, file, JSON.stringify(stage())], {cwd: new URL('..', import.meta.url), encoding:'utf8'});
+    assert.equal(child.status, 0, child.stderr);
+    a = createSqliteStationOperationsStore(file);
+    b = createSqliteStationOperationsStore(file);
+    const first = runtime(a, 'a'), second = runtime(b, 'b');
+    const oldLease = first.claim('station', 11000);
+    assert.throws(() => second.claim('station', 11500), /active worker/);
+    const lease = second.claim('station', 12000);
+    assert.throws(() => first.cueAt('station', oldLease, 12001), /fenced/);
+    assert.equal(second.cueAt('station', lease, 12001).segmentRef, 'music');
+    assert.throws(() => second.cueAt('station', lease, 11999), /rollback/);
+    assert.throws(() => first.publish(stage(), {expectedRevision:0, atMs:12002}), /revision conflict/);
+    assert.equal(second.publish(stage(), {expectedRevision:1, atMs:12002}).revision, 2);
+    assert.throws(() => second.cueAt('station', lease, 12003), /fenced/);
+    assert.throws(() => a.publish({...stage(), tenantId:'other'}, {expectedRevision:2, atMs:12004}), ContractError);
+  } finally { a?.close(); b?.close(); rmSync(dir, {recursive:true, force:true}); }
+});
+
+test('sponsor cues permit compiler null occurrence; gaps, overlaps and identity changes are rejected', () => {
+  const p = program();
+  p.timeline.push({ref:'ad', role:'sponsor', fromMs:3000, toMs:3500, occurrenceId:null});
+  p.durationMs = 3500;
+  const extra = {...assets()[0], segmentRef:'ad', assetRef:'ciphertext:ad'};
+  const prepared = stage({rotation:{stationId:'station', blocks:[{effectiveAt:10000, program:p}]}, assets:[...assets(), extra]});
+  assert.equal(cue(prepared, 13000).segmentRole, 'sponsor');
+  for (const start of [499, 501]) {
+    const changed = program(); changed.timeline[1].fromMs = start;
+    assert.throws(() => stage({rotation:{stationId:'station', blocks:[{effectiveAt:10000, program:changed}]}}), /contiguous/);
+  }
+  const store = createMemoryStationOperationsStore();
+  store.publish(stage(), {expectedRevision:0, atMs:10000});
+  const other = stage();
+  const changed = {...other, tenantId:'other', assets:other.assets.map(a=>({...a,tenantId:'other'}))};
+  assert.throws(() => store.publish(changed, {expectedRevision:1, atMs:10001}), /scope/);
+  assert.throws(() => store.claim({stationId:'station',workerId:'a',atMs:10001,ttlMs:Number.MAX_SAFE_INTEGER}), /expiry/);
+});
