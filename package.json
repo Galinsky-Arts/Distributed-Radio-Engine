@@ -5,10 +5,12 @@
   "type": "module",
   "description": "Neutral radio programming and publishing contracts; development stage",
   "engines": {
-    "node": ">=22.13"
+    "node": ">=24.19.0 <25"
   },
   "exports": {
     ".": "./src/index.mjs",
+    "./playback": "./src/radio-playback.mjs",
+    "./join": "./src/radio-join.mjs",
     "./vesting-store": "./src/sqlite-vesting-store.mjs"
   },
   "scripts": {
@@ -18,4 +20,3 @@
   },
   "license": "UNLICENSED"
 }
-
