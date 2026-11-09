@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 3,
-  "observedAt": "2026-11-09T22:59:06Z",
+  "observedAt": "2026-11-09T23:10:37Z",
   "units": [
     {
       "id": "DRE-01",
@@ -403,7 +403,9 @@
       "id": "DRE-24",
       "title": "Commerce and complete-work products",
       "origin": "addition",
-      "prs": [],
+      "prs": [
+        33
+      ],
       "dependsOn": [
         "DRE-04",
         "DRE-18",
@@ -486,19 +488,34 @@
   ],
   "pullRequests": [
     {
+      "id": 5232707622,
+      "number": 33,
+      "title": "DRE-24: Whole-work checkout and durable purchase fulfillment",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/33",
+      "state": "open",
+      "draft": true,
+      "createdAt": "2026-11-09T23:08:34Z",
+      "updatedAt": "2026-11-09T23:08:34Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "e7f05d6cc0cfb464ca2ad4d48f09b41ab0e6f26a",
+      "baseRef": "main",
+      "mergeCommitSha": "14d99569d8aa1400e39a0992e2101cb6620ceeff"
+    },
+    {
       "id": 5232581906,
       "number": 32,
       "title": "DRE-23: Durable Groove outcomes and endpoint entitlements",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/32",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-11-09T22:57:12Z",
-      "updatedAt": "2026-11-09T22:57:12Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "e530debc838b9cda63a4a7dc40e91668961cc150",
+      "updatedAt": "2026-11-09T23:05:56Z",
+      "closedAt": "2026-11-09T23:05:56Z",
+      "mergedAt": "2026-11-09T23:05:56Z",
+      "headSha": "a02741950b6a498167df0ba0471a58b46195fbed",
       "baseRef": "main",
-      "mergeCommitSha": "6027a1e1bf24d20dbc7df2bd8ff193cb8ba3e120"
+      "mergeCommitSha": "c0288c0ea3412d220c805ff9de0a8ce220a35c75"
     },
     {
       "id": 5232374725,
