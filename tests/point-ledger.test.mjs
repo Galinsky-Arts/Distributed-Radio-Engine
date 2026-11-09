@@ -196,3 +196,24 @@ test('bounded audit reconciles immutable entries and detects materialized balanc
   db.close();store.close();
 });
 
+
+import {VestingGate} from '../src/vesting.mjs';
+import {SqliteVestingStore} from '../src/sqlite-vesting-store.mjs';
+test('actual durable outro receipt credits a wallet once; altered and missing receipts fail',t=>{
+  const path=file(t),receiptPath=path+'.vesting';
+  let receipts=new SqliteVestingStore(receiptPath);
+  const event={...receipt,proof:'fixture',playbackContinuous:true,interruptions:false};
+  delete event.decision;delete event.walletSettlement;
+  const gate=new VestingGate({scope,store:receipts,verifyCompletion:()=>true,now:()=>1000});
+  const accepted=gate.vest(event);assert.equal(accepted.accepted,true);
+  receipts.close();receipts=new SqliteVestingStore(receiptPath);t.after(()=>receipts.close());
+  const store=new SqlitePointStore(path);t.after(()=>store.close());
+  const ledger=setup(store,{verifyVestingReceipt:createStoredVestingVerifier({receiptStore:receipts,
+    authorizeReceiptAccess:(_receipt,_scope,proof)=>proof==='test-proof'})});
+  assert.equal(credit(ledger,{receipt:accepted.record}).applied,true);
+  assert.equal(credit(ledger,{receipt:accepted.record,operationId:'retry'}).applied,false);
+  assert.throws(()=>credit(ledger,{receipt:{...accepted.record,points:999n},operationId:'altered'}),/authentication/);
+  assert.throws(()=>credit(ledger,{receipt:{...accepted.record,occurrenceId:'missing'},operationId:'missing'}),/authentication/);
+  assert.equal(ledger.balance('artist').balance,100n);
+  assert.equal(ledger.audit('artist').consistent,true);
+});
