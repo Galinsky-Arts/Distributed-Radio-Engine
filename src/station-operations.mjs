@@ -23,11 +23,17 @@ function exactFields(value, fields, name) {
 function sanitizeSchedule(rotation, stationId, verifyEditorialApproval, station) {
   const source = buildStationRotation(rotation);
   if (source.stationId !== stationId) throw new ContractError('Schedule station mismatch');
+  let totalCues = 0;
   const blocks = source.blocks.map(({ effectiveAt, program }) => {
     if (!DIGEST.test(program.digest) || !Number.isSafeInteger(program.version) || program.version < 1)
       throw new ContractError('Unverifiable program identity');
     if (verifyEditorialApproval && verifyEditorialApproval(program, station) !== true)
       throw new ContractError('Program publication not approved');
+    totalCues += program.timeline.length;
+    if (totalCues > 10000 || !Array.isArray(program.completions ?? []) ||
+        !Array.isArray(program.opportunities ?? []) ||
+        (program.completions?.length ?? 0) > 10000 || (program.opportunities?.length ?? 0) > 10000)
+      throw new ContractError('Station schedule resource bound exceeded');
     const timeline = program.timeline.map(cue => {
       assertObject(cue, 'program cue');
       const safe = Object.freeze({
@@ -46,12 +52,34 @@ function sanitizeSchedule(rotation, stationId, verifyEditorialApproval, station)
     if (timeline[0].fromMs !== 0 || timeline.at(-1).toMs !== program.durationMs ||
         timeline.some((cue, i) => i > 0 && cue.fromMs !== timeline[i - 1].toMs))
       throw new ContractError('Timeline must be contiguous and complete');
+    const completions = (program.completions ?? []).map(row => {
+      const occurrenceId = integer(row?.occurrenceId, 'completed occurrence', 1);
+      const vestNotBeforeMs = integer(row?.vestNotBeforeMs, 'outro completion', 1);
+      if (!timeline.some(cue => cue.role === 'closing' && cue.occurrenceId === occurrenceId && cue.toMs === vestNotBeforeMs))
+        throw new ContractError('Completion requires its exact closing identification');
+      return Object.freeze({occurrenceId, vestNotBeforeMs});
+    });
+    if (completions.length > timeline.length || new Set(completions.map(row => row.occurrenceId)).size !== completions.length)
+      throw new ContractError('Duplicate or excessive completions');
+    const opportunities = (program.opportunities ?? []).map(row => {
+      const marker = Object.freeze({id:id(row?.id, 'transition marker'),
+        atMs:integer(row?.atMs, 'transition time'),afterOccurrence:integer(row?.afterOccurrence, 'transition occurrence', 1)});
+      const completion = completions.find(item => item.occurrenceId === marker.afterOccurrence);
+      const nextIntro = completion && timeline.find(cue => cue.role === 'opening' && cue.fromMs >= completion.vestNotBeforeMs);
+      if (!completion || marker.atMs < completion.vestNotBeforeMs || marker.atMs > (nextIntro?.fromMs ?? program.durationMs))
+        throw new ContractError('Transition outside shared outro/intro boundary');
+      return marker;
+    });
+    if (opportunities.length > completions.length || new Set(opportunities.map(row => row.id)).size !== opportunities.length ||
+        new Set(opportunities.map(row => row.afterOccurrence)).size !== opportunities.length)
+      throw new ContractError('Duplicate or excessive transition markers');
     const safeProgram = Object.freeze({
       stationId,
       version: program.version,
       digest: program.digest,
       durationMs: integer(program.durationMs, 'program duration', 1),
-      timeline: Object.freeze(timeline)
+      timeline: Object.freeze(timeline),
+      completions: Object.freeze(completions), opportunities: Object.freeze(opportunities)
     });
     return Object.freeze({ effectiveAt: integer(effectiveAt, 'activation time'), program: safeProgram });
   });
