@@ -115,7 +115,9 @@
       "id": "DRE-10",
       "title": "Always-on encrypted station operations",
       "origin": "addition",
-      "prs": [],
+      "prs": [
+        14
+      ],
       "dependsOn": [],
       "externalDependencies": [],
       "externalPrerequisites": []
@@ -284,6 +286,21 @@
     }
   ],
   "pullRequests": [
+    {
+      "id": 4847268079,
+      "number": 14,
+      "title": "DRE-10: establish ciphertext-only autonomous radio playout authorization gate",
+      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/14",
+      "state": "open",
+      "draft": false,
+      "createdAt": "2026-10-13T17:52:56.000Z",
+      "updatedAt": "2026-11-02T00:44:07.000Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "b91347b5eb592575156efd378f8df49ae4593867",
+      "baseRef": "main",
+      "mergeCommitSha": null
+    },
     {
       "id": 4807489430,
       "number": 12,
