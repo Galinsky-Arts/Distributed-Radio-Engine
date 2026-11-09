@@ -2,6 +2,12 @@
 
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
+**DRE-11 SDK work:** [linear-radio playback facade](docs/radio-playback-sdk.md)
+provides transport-neutral web/native lifecycle adapters, current-station joins,
+bounded ciphertext backpressure and recovery. `npm run check` exercises software
+fixtures; actual DRE-10 station/endpoint integration remains pending. The SDK does
+not establish keys, implement a new encryption protocol or certify live playback.
+
 # Four-project development plan
 
 120 planned work packages: 34 Distributed Audio Engine, 32 SceneSignal, 28 Distributed Radio Engine, 26 TrackZero. The original 88-package baseline remains mapped separately; 32 work packages were added. These are roadmap identifiers, not GitHub PR numbers.
@@ -21,3 +27,4 @@ Implementation begins after the preceding stage. [Development plan](docs/distrib
 ## End-to-End Everywhere progress
 
 The canonical [security/e2eesa-status.json](security/e2eesa-status.json) records standard implementation, complete testing and independent expert review separately. Engine Room reads it automatically from GitHub. All initial stages are pending; existing profile locks and approved decisions remain authoritative. Read [adoption and independent-account instructions](docs/E2EESA_ADOPTION.md), and run `python3 scripts/validate_e2eesa_status.py`. Record validation does not establish product security or certification.
+
