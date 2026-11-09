@@ -2,6 +2,9 @@
 
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
+**DRE-19 checkpoint:** [shared recording-channel registry and remaining work](docs/groove-catalog-checkpoint.md).
+Channel identities persist atomically; catalog/grant/delivery integration remains
+incomplete. Unimplemented grant APIs fail closed; this draft is not deployable.
 **DRE-17 price contract:** [versioned gentle/exponential reward ladder](docs/reward-price-ladder.md)
 supports unbounded mathematical tiers, exact bounded quotes, symbolic fallback
 and creator-approved immutable prices. It does not authorize a spend.
