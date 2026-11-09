@@ -40,6 +40,8 @@ export class SqlitePointStore {
         throw new Error('Unsupported point-wallet schema');
       db.exec('CREATE TABLE IF NOT EXISTS radio_point_wallets(wallet_id TEXT PRIMARY KEY,balance TEXT NOT NULL,lifetime_earned TEXT NOT NULL,lifetime_reversed TEXT NOT NULL) STRICT');
       db.exec("CREATE TABLE IF NOT EXISTS radio_point_entries(sequence INTEGER PRIMARY KEY AUTOINCREMENT,wallet_id TEXT NOT NULL,operation_id TEXT NOT NULL,kind TEXT NOT NULL CHECK(kind IN ('vest','spend','reverse')),delta TEXT NOT NULL,source_id TEXT UNIQUE,reference_id TEXT,payload_json TEXT NOT NULL CHECK(json_valid(payload_json)),created_at INTEGER NOT NULL,UNIQUE(wallet_id,operation_id),UNIQUE(wallet_id,reference_id)) STRICT");
+      db.exec('CREATE TABLE IF NOT EXISTS radio_point_offers(scope_key TEXT NOT NULL,offer_id TEXT NOT NULL,version INTEGER NOT NULL,stock INTEGER NOT NULL CHECK(stock>=0),offer_json TEXT NOT NULL CHECK(json_valid(offer_json)),PRIMARY KEY(scope_key,offer_id)) STRICT');
+      db.exec('CREATE TABLE IF NOT EXISTS radio_point_entitlements(wallet_id TEXT NOT NULL,operation_id TEXT NOT NULL,offer_id TEXT NOT NULL,offer_version INTEGER NOT NULL,receipt_json TEXT NOT NULL CHECK(json_valid(receipt_json)),PRIMARY KEY(wallet_id,operation_id),UNIQUE(wallet_id,offer_id)) STRICT');
       db.exec('COMMIT');
     } catch(error) {try{db.exec('ROLLBACK');}catch{}db.close();throw error;}
     this.#db=db;
@@ -54,7 +56,8 @@ export class SqlitePointStore {
     this.#wallet(walletId);
     return stats(this.#db.prepare('SELECT * FROM radio_point_wallets WHERE wallet_id=?').get(walletId));
   }
-  apply(walletId,operation,nowMs) {
+  apply(walletId,operation,nowMs) { return this.#apply(walletId,operation,nowMs,false); }
+  #apply(walletId,operation,nowMs,withinTransaction) {
     this.#wallet(walletId);
     const fields=['kind','operationId','amount','sourceId','sourceBinding','referenceId','metadata'];
     if(!operation||Object.keys(operation).length!==fields.length||fields.some(k=>!Object.hasOwn(operation,k)))
@@ -82,14 +85,14 @@ export class SqlitePointStore {
       if(operation.amount!==null)throw new TypeError('Reversal quantity must derive from original');
     } else if(operation.referenceId!==null)throw new TypeError('Unexpected reversal reference');
     const payload=JSON.stringify(operation);
-    this.#db.exec('BEGIN IMMEDIATE');
+    if(!withinTransaction)this.#db.exec('BEGIN IMMEDIATE');
     try {
       const prior=this.#db.prepare('SELECT payload_json FROM radio_point_entries WHERE wallet_id=? AND operation_id=?')
         .get(walletId,operation.operationId);
       if(prior) {
         if(prior.payload_json!==payload)throw new RangeError('Conflicting financial replay');
         const result=Object.freeze({applied:false,...this.balance(walletId)});
-        this.#db.exec('COMMIT');return result;
+        if(!withinTransaction)this.#db.exec('COMMIT');return result;
       }
       if(operation.kind==='vest') {
         const consumed=this.#db.prepare('SELECT wallet_id,payload_json FROM radio_point_entries WHERE source_id=?').get(operation.sourceId);
@@ -98,11 +101,13 @@ export class SqlitePointStore {
           if(consumed.wallet_id!==walletId||original.sourceBinding!==operation.sourceBinding||original.amount!==operation.amount)
             throw new RangeError('Conflicting consumed vesting receipt');
           const result=Object.freeze({applied:false,...this.balance(walletId)});
-          this.#db.exec('COMMIT');return result;
+          if(!withinTransaction)this.#db.exec('COMMIT');return result;
         }
       }
       let delta;
       if(operation.kind==='reverse') {
+        if(this.#db.prepare('SELECT 1 FROM radio_point_entitlements WHERE wallet_id=? AND operation_id=?').get(walletId,operation.referenceId))
+          throw new RangeError('Reward reversal requires entitlement reconciliation');
         const original=this.#db.prepare('SELECT kind,delta FROM radio_point_entries WHERE wallet_id=? AND operation_id=?')
           .get(walletId,operation.referenceId);
         if(!original||original.kind==='reverse')throw new RangeError('Original scoped point operation required');
@@ -120,9 +125,59 @@ export class SqlitePointStore {
         .run(walletId,next.toString(),earned.toString(),reversed.toString());
       this.#db.prepare('INSERT INTO radio_point_entries(wallet_id,operation_id,kind,delta,source_id,reference_id,payload_json,created_at) VALUES(?,?,?,?,?,?,?,?)')
         .run(walletId,operation.operationId,operation.kind,delta.toString(),operation.sourceId,operation.referenceId,payload,nowMs);
-      this.#db.exec('COMMIT');
+      if(!withinTransaction)this.#db.exec('COMMIT');
       return Object.freeze({applied:true,balance:next,lifetimeEarned:earned,lifetimeReversed:reversed,netEarned:earned-reversed});
-    } catch(error) {try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+    } catch(error) {if(!withinTransaction){try{this.#db.exec('ROLLBACK');}catch{}}throw error;}
+  }
+  /** Internal authorized-endpoint catalog persistence, not an HTTP API. */
+  publishPointOffer(scopeKey,offer,expectedVersion,authorize) {
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      if(authorize(offer)!==true)throw new RangeError('Reward publication denied');
+      const old=this.#db.prepare('SELECT version,offer_json FROM radio_point_offers WHERE scope_key=? AND offer_id=?').get(scopeKey,offer.offerId);
+      if((old?.version??0)!==expectedVersion)throw new RangeError('Offer version conflict');
+      if(old) {
+        const original=JSON.parse(old.offer_json);
+        if(original.kind!==offer.kind||original.recordingId!==offer.recordingId)throw new RangeError('Immutable reward identity');
+      }
+      this.#db.prepare('INSERT INTO radio_point_offers VALUES(?,?,?,?,?) ON CONFLICT(scope_key,offer_id) DO UPDATE SET version=excluded.version,stock=excluded.stock,offer_json=excluded.offer_json')
+        .run(scopeKey,offer.offerId,offer.version,offer.stock,JSON.stringify(offer));
+      this.#db.exec('COMMIT');return offer;
+    }catch(error){try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+  }
+  pointOffer(scopeKey,offerId) {
+    const row=this.#db.prepare('SELECT stock,offer_json FROM radio_point_offers WHERE scope_key=? AND offer_id=?').get(scopeKey,offerId);
+    return row?Object.freeze({...JSON.parse(row.offer_json),stock:row.stock}):null;
+  }
+  /** Debit, stock and entitlement commit together in this wallet database. */
+  redeemPointOffer(walletId,scopeKey,request,nowMs,authorize) {
+    this.#wallet(walletId);
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const offer=this.pointOffer(scopeKey,request.offerId);
+      if(!offer||authorize(offer,request)!==true)throw new RangeError('Reward redemption denied');
+      const old=this.#db.prepare('SELECT receipt_json FROM radio_point_entitlements WHERE wallet_id=? AND operation_id=?').get(walletId,request.operationId);
+      if(old) {
+        const receipt=JSON.parse(old.receipt_json);
+        if(receipt.offerId!==request.offerId||receipt.offerVersion!==request.offerVersion)throw new RangeError('Conflicting reward replay');
+        this.#db.exec('COMMIT');return Object.freeze({applied:false,receipt:Object.freeze(receipt)});
+      }
+      const owned=this.#db.prepare('SELECT receipt_json FROM radio_point_entitlements WHERE wallet_id=? AND offer_id=?').get(walletId,request.offerId);
+      if(owned) {
+        this.#db.exec('COMMIT');return Object.freeze({applied:false,receipt:Object.freeze(JSON.parse(owned.receipt_json))});
+      }
+      if(offer.version!==request.offerVersion||offer.expiresAtMs<=nowMs||offer.stock<1)throw new RangeError('Offer changed, expired or exhausted');
+      const spent=this.#apply(walletId,{kind:'spend',operationId:request.operationId,amount:offer.points,
+        sourceId:null,sourceBinding:null,referenceId:null,metadata:offer.offerId},nowMs,true);
+      if(!spent.applied)throw new RangeError('Operation ID already used outside reward issuance');
+      const [tenantId,applicationId,principalId]=JSON.parse(walletId);
+      const receipt=Object.freeze({tenantId,applicationId,principalId,offerId:offer.offerId,offerVersion:offer.version,creatorId:offer.creatorId,
+        operationId:request.operationId,kind:offer.kind,recordingId:offer.recordingId,points:offer.points,
+        unit:'micro-reference-seconds',grantedAtMs:nowMs});
+      this.#db.prepare('UPDATE radio_point_offers SET stock=stock-1 WHERE scope_key=? AND offer_id=?').run(scopeKey,offer.offerId);
+      this.#db.prepare('INSERT INTO radio_point_entitlements VALUES(?,?,?,?,?)').run(walletId,request.operationId,offer.offerId,offer.version,JSON.stringify(receipt));
+      this.#db.exec('COMMIT');return Object.freeze({applied:true,receipt});
+    }catch(error){try{this.#db.exec('ROLLBACK');}catch{}throw error;}
   }
   entries(walletId,{afterSequence=0n,limit=100}={}) {
     this.#wallet(walletId);
