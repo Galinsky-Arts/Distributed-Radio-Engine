@@ -56,3 +56,9 @@ test('auditable draw does not expose raw listener IDs or protected issuer seeds'
  assert.equal(evidence.contextCommitment.length,64);
  assert.equal(evidence.weightsCommitment.length,64);
 });
+
+test('selection validates the entire weight distribution before an early return',()=>{
+ assert.throws(()=>selectRarityTier({weights:[10n,-1n],total:9n},0n),/inconsistent/);
+ assert.throws(()=>selectRarityTier({weights:[10n,1n],total:10n},0n),/inconsistent/);
+ assert.equal(selectRarityTier({weights:[10n,0n],total:10n},9n),0);
+});

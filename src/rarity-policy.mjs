@@ -10,11 +10,12 @@ export function rarityWeights({tiers,base=2n,maxTiers=128}) {
   return Object.freeze({weights:Object.freeze(weights),total,hasPositiveTail:weights.every(w=>w>0n)});
 }
 export function selectRarityTier({weights,total},draw) {
-  if(!Array.isArray(weights)||weights.length===0||typeof total!=='bigint'||total<=0n||typeof draw!=='bigint'||draw<0n||draw>=total)
+  if(!Array.isArray(weights)||weights.length===0||weights.length>128||typeof total!=='bigint'||total<=0n||typeof draw!=='bigint'||draw<0n||draw>=total)
     throw new RangeError('Invalid auditable draw');
+  if(weights.some(w=>typeof w!=='bigint'||w<0n)||weights.reduce((a,b)=>a+b,0n)!==total)
+    throw new RangeError('Weights and draw total inconsistent');
   let cursor=0n;
   for(let i=0;i<weights.length;i++) {
-    if(typeof weights[i]!=='bigint'||weights[i]<=0n)throw new RangeError('Nonpositive tier');
     cursor+=weights[i];if(draw<cursor)return i;
   }
   throw new RangeError('Weights and draw total inconsistent');
