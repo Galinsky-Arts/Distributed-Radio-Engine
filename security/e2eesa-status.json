@@ -44,11 +44,12 @@
   },
   "existingSecurityEvidence": [
     "docs/security-baseline.json",
-    "docs/security.md"
+    "docs/security.md",
+    "docs/radio-security-flow-inventory.json"
   ],
   "nextActions": [
     "Read the product plan, AGENTS, current implementation, security pins and the existing evidence listed above; preserve approved scope.",
-    "Complete and independently review the source/build/runtime component and data-flow inventory using the pinned upstream contracts.",
+    "Complete source/build/runtime inventory and owner-authorized AI assessment; independent expert review remains deferred follow-up, not a development or release prerequisite.",
     "Implement or close unverified protected flows; retain intentional public data and authorized business processing boundaries.",
     "Verify all six required gates and actual applicable integrations/platforms on the same source, preserving immutable reports.",
     "Keep the owner-arranged independent expert review unchecked until qualified authenticated review and owner acceptance are recorded."
