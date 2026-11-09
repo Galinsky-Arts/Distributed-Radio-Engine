@@ -11,7 +11,8 @@
     ".": "./src/index.mjs",
     "./playback": "./src/radio-playback.mjs",
     "./join": "./src/radio-join.mjs",
-    "./vesting-store": "./src/sqlite-vesting-store.mjs"
+    "./vesting-store": "./src/sqlite-vesting-store.mjs",
+    "./point-store": "./src/sqlite-point-store.mjs"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",

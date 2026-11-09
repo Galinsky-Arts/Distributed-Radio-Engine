@@ -2,6 +2,10 @@
 
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
+**DRE-16 wallet boundary:** [durable scoped point accounting](docs/point-ledger.md)
+uses authenticated receipt consumption, atomic balances/audit, constrained
+reversals and concurrent-spend protection. Real producer integration and release
+acceptance remain separate from software fixtures.
 **DRE-15 completion gate:** [authenticated durable vesting receipts](docs/vesting-receipts.md)
 bind the matching outro and persist unique occurrence decisions across restarts
 and concurrent processes. Wallet settlement remains explicitly pending.
