@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Neutral radio programming and publishing contracts; development stage",
   "engines": {
-    "node": ">=22"
+    "node": ">=24.19.0 <25"
   },
   "exports": {
     ".": "./src/index.mjs",
