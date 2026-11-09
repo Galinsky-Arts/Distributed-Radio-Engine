@@ -8,6 +8,7 @@ export * from './rotation.mjs';
 export * from './interstitial.mjs';
 export * from './sponsors.mjs';
 export * from './groove-catalog.mjs';
+export * from './reward-ladder.mjs';
 export * from './point-ledger.mjs';
 export * from './vesting.mjs';
 export * from './provisional-progress.mjs';

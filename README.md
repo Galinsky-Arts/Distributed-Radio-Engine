@@ -5,6 +5,9 @@
 **DRE-19 checkpoint:** [shared recording-channel registry and remaining work](docs/groove-catalog-checkpoint.md).
 Channel identities persist atomically; catalog/grant/delivery integration remains
 incomplete. Unimplemented grant APIs fail closed; this draft is not deployable.
+**DRE-17 price contract:** [versioned gentle/exponential reward ladder](docs/reward-price-ladder.md)
+supports unbounded mathematical tiers, exact bounded quotes, symbolic fallback
+and creator-approved immutable prices. It does not authorize a spend.
 **DRE-16 wallet boundary:** [durable scoped point accounting](docs/point-ledger.md)
 uses authenticated receipt consumption, atomic balances/audit, constrained
 reversals and concurrent-spend protection. Real producer integration and release

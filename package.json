@@ -13,6 +13,7 @@
     "./join": "./src/radio-join.mjs",
     "./vesting-store": "./src/sqlite-vesting-store.mjs",
     "./point-store": "./src/sqlite-point-store.mjs",
+    "./reward-prices": "./src/reward-ladder.mjs",
     "./recording-channels": "./src/recording-channels.mjs"
   },
   "scripts": {
