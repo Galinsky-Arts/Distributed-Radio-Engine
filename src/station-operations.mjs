@@ -23,11 +23,17 @@ function exactFields(value, fields, name) {
 function sanitizeSchedule(rotation, stationId, verifyEditorialApproval, station) {
   const source = buildStationRotation(rotation);
   if (source.stationId !== stationId) throw new ContractError('Schedule station mismatch');
+  let totalCues = 0;
   const blocks = source.blocks.map(({ effectiveAt, program }) => {
     if (!DIGEST.test(program.digest) || !Number.isSafeInteger(program.version) || program.version < 1)
       throw new ContractError('Unverifiable program identity');
     if (verifyEditorialApproval && verifyEditorialApproval(program, station) !== true)
       throw new ContractError('Program publication not approved');
+    totalCues += program.timeline.length;
+    if (totalCues > 10000 || !Array.isArray(program.completions ?? []) ||
+        !Array.isArray(program.opportunities ?? []) ||
+        (program.completions?.length ?? 0) > 10000 || (program.opportunities?.length ?? 0) > 10000)
+      throw new ContractError('Station schedule resource bound exceeded');
     const timeline = program.timeline.map(cue => {
       assertObject(cue, 'program cue');
       const safe = Object.freeze({
