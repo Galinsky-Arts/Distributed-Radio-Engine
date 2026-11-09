@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "kind": "partial-source-review-not-standard-assessment",
+  "reviewedAt": "2026-11-09",
+  "reviewMethod": "AI-assisted source review plus automated adversarial/integration tests",
+  "productStandardPin": "dea8f54cab9130da86a71f36de553766a978daf2",
+  "developmentTrackingPin": "8441335f359c6e446f9bfe8b959f9606ce341409",
+  "flows": [
+    {
+      "flow": "public-program",
+      "classification": "public cue timing and opaque ciphertext references",
+      "sourceFiles": [
+        {
+          "path": "src/program.mjs",
+          "sha256": "0f08c336a336d8d9eeb77d9069d7ffe7dfb954b2b522958e9687a29a876a686a",
+          "present": true
+        },
+        {
+          "path": "src/station-operations.mjs",
+          "sha256": "14a6636a2ebee4a1f59ce928563714a7a3be62cadc9a904ce0516c3950d6b5fa",
+          "present": true
+        }
+      ],
+      "pending": "ciphertext scheduler has no media keys; approved publisher remains required"
+    },
+    {
+      "flow": "endpoint-playback",
+      "classification": "authorized endpoint only",
+      "sourceFiles": [
+        {
+          "path": "src/radio-playback.mjs",
+          "sha256": "ee086b8d69a528575e3ce81448df7d14c4d70ff806948fc32d3e804372722832",
+          "present": true
+        },
+        {
+          "path": "src/radio-join.mjs",
+          "sha256": "c30a051edc99620ad9c2ae5b904b6859b603653e7a198067a83f4788f22cad30",
+          "present": true
+        }
+      ],
+      "pending": "DAE endpoint enrollment, native secure storage and real device lifecycle remain unqualified"
+    },
+    {
+      "flow": "contribution-and-rewards",
+      "classification": "scoped reward-verifier endpoint and required balance/entitlement processing",
+      "sourceFiles": [
+        {
+          "path": "src/contribution-policy.mjs",
+          "sha256": "f7f3bf27f13028d6b72311423c5560fbd25e56e9c150ca2e0194f4a97fadce43",
+          "present": true
+        },
+        {
+          "path": "src/vesting.mjs",
+          "sha256": "5f02bb414172d5f449c471bae908eade1e7a345c9c9318bb41eee0388f9e518c",
+          "present": true
+        },
+        {
+          "path": "src/point-rewards.mjs",
+          "sha256": "eded6a3bd5af1474db4a80be4ee01b233b7b7a0fd549f34a0b8d32e4a175a91a",
+          "present": true
+        },
+        {
+          "path": "src/groove-grants.mjs",
+          "sha256": "6cdd8bc1745ba291e23fe13809b1aa29d0e621d32a2d6e050b5450c1af4aa6a4",
+          "present": true
+        }
+      ],
+      "pending": "authenticated evidence adapters required; fixtures do not establish physical output"
+    },
+    {
+      "flow": "whole-work-commerce",
+      "classification": "necessary provider transaction and buyer/product identifiers",
+      "sourceFiles": [
+        {
+          "path": "src/whole-work-commerce.mjs",
+          "sha256": "682ec5e9df6110a2fa497baaf92fe0a544c9a7d7352f644e6e6ce69d124422e9",
+          "present": true
+        }
+      ],
+      "pending": "media keys and private manifests excluded; provider credentials, consent, payouts/refunds remain deployment work"
+    },
+    {
+      "flow": "creator-reporting",
+      "classification": "private authenticated report endpoint",
+      "sourceFiles": [
+        {
+          "path": "src/creator-report.mjs",
+          "sha256": "31fd56ec3959b0ef5932fc33b993687e7175e28772dfd11baadad05f2c1996b1",
+          "present": true
+        }
+      ],
+      "pending": "requires per-source verifier; partial/unknown metrics are not zero"
+    }
+  ],
+  "findings": [
+    {
+      "finding": "public scheduler recovery database could be externally mutable",
+      "resolution": "require owner-private ordinary file and directory; deny symlink and implicit memory storage",
+      "tests": "tests/station-operations.test.mjs"
+    }
+  ],
+  "completeStandardAssessment": false,
+  "independentHumanReview": false,
+  "productionQualification": false
+}
