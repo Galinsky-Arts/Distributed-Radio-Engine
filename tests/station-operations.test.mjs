@@ -239,3 +239,17 @@ test('sponsor cues permit compiler null occurrence; gaps, overlaps and identity 
   assert.throws(() => store.publish(changed, {expectedRevision:1, atMs:10001}), /scope/);
   assert.throws(() => store.claim({stationId:'station',workerId:'a',atMs:10001,ttlMs:Number.MAX_SAFE_INTEGER}), /expiry/);
 });
+
+import {chmodSync,symlinkSync,writeFileSync,readFileSync,statSync} from 'node:fs';
+test('durable station state rejects public directories, symlink targets and implicit volatility',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'station-integrity-'));
+ try{
+  assert.throws(()=>createSqliteStationOperationsStore(':memory:'),/test opt-in/);
+  chmodSync(dir,0o777);assert.throws(()=>createSqliteStationOperationsStore(join(dir,'state.sqlite')),/Private station/);
+  chmodSync(dir,0o700);const target=join(dir,'target');writeFileSync(target,'unchanged',{mode:0o600});
+  symlinkSync(target,join(dir,'symlink.sqlite'));assert.throws(()=>createSqliteStationOperationsStore(join(dir,'symlink.sqlite')));
+  assert.equal(readFileSync(target,'utf8'),'unchanged');
+  const file=join(dir,'state.sqlite'),store=createSqliteStationOperationsStore(file);store.close();
+  assert.equal(statSync(file).mode&0o077,0);
+ }finally{rmSync(dir,{recursive:true,force:true});}
+});

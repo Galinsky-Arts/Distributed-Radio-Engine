@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
+import {constants,openSync,closeSync,lstatSync,fstatSync,fchmodSync} from 'node:fs';
+import {dirname,isAbsolute} from 'node:path';
 import { assertObject, createStation, id, ContractError } from './contracts.mjs';
 import { buildStationRotation, radioPositionAt } from './rotation.mjs';
 
@@ -318,8 +320,18 @@ export function createMemoryStationOperationsStore() {
  * Use a trusted host clock and protect the database against snapshot rollback.
  * It is not a distributed clock, public API or multi-region store.
  */
-export function createSqliteStationOperationsStore(filename) {
+export function createSqliteStationOperationsStore(filename,{allowMemory=false}={}) {
   if (typeof filename !== 'string' || !filename) throw new ContractError('Database filename required');
+  if(filename===':memory:'){if(!allowMemory)throw new ContractError('Volatile station store requires test opt-in');}
+  else {
+    if(!isAbsolute(filename))throw new ContractError('Absolute station database path required');
+    const parent=lstatSync(dirname(filename));
+    if(typeof process.getuid!=='function'||!parent.isDirectory()||parent.isSymbolicLink()||parent.uid!==process.getuid()||(parent.mode&0o077)!==0)
+      throw new ContractError('Private station database directory required');
+    const fd=openSync(filename,constants.O_CREAT|constants.O_RDWR|constants.O_NOFOLLOW,0o600);
+    try {const file=fstatSync(fd);if(!file.isFile()||file.uid!==process.getuid())throw new ContractError('Private ordinary station database required');fchmodSync(fd,0o600);}
+    finally{closeSync(fd);}
+  }
   const db = new DatabaseSync(filename);
   db.exec(`PRAGMA busy_timeout=5000; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
     CREATE TABLE IF NOT EXISTS radio_operations(station_id TEXT PRIMARY KEY, record_json TEXT NOT NULL);`);
