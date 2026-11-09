@@ -18,3 +18,5 @@ export * from './radio-join.mjs';
 export * from './radio-playback.mjs';
 export * from './station-operations.mjs';
 
+
+export * from './point-rewards.mjs';
