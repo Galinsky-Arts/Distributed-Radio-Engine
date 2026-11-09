@@ -35,3 +35,10 @@ records, production identities and actual encrypted endpoint delivery remain
 pending. Optional tips/gifts require their own approved provider transaction
 adapters. Do not treat these software fixtures as a live merchant integration,
 settlement run, production readiness or certification.
+
+Paid recording membership uses the same permanent DRE-19 recording-channel
+registry as points and Grooves. Complete-work publication cannot reuse a bonus
+recording or silently reassign its creator. Fulfillment rechecks this immutable
+ownership even after restart. Channel reservations occur only after trusted
+complete-work approval and core registration; an interrupted registration can
+leave an unused reservation, never a cross-channel entitlement or payment.

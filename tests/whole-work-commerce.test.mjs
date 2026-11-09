@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {pathToFileURL} from 'node:url';
 import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
+import {RecordingChannelRegistry} from '../src/recording-channels.mjs';
 import {WholeWorkCommerce} from '../src/whole-work-commerce.mjs';
 const modulePath=process.env.AUDIO_ENGINE_MODULE,options={skip:!modulePath&&'Set AUDIO_ENGINE_MODULE to the pinned actual DAE build'};
 async function fixture(t){
@@ -12,6 +13,7 @@ async function fixture(t){
  for(const assetId of ['one','two'])rights.add(manager,{id:'right-'+assetId,assetId,layer:'recording',uses:['sale','download'],territories:['US'],validFromMs:0,validUntilMs:100000,authorizationEvidenceRef:'sha256:'+'a'.repeat(64),revoked:false},1);
  let work={kind:'complete-album',creatorId:'artist',completeAssetIds:['one','two'],product:{id:'album',revision:1,
   assets:[{assetId:'one',rightsLayers:['recording']},{assetId:'two',rightsLayers:['recording']}],currency:{code:'USD',minorUnit:2},priceMinor:'1000',validUntilMs:100000}};
+ const registry=new RecordingChannelRegistry(join(dir,'channels.sqlite'));t.after(()=>registry.close());
  const requests=[];const provider={providerId:'fixture-provider',merchantAccountId:'account',createIntent:async request=>{
   requests.push(request);return {providerId:'fixture-provider',merchantAccountId:'account',providerPaymentId:'payment:'+request.checkoutId,currency:request.currency,amountMinor:request.amountMinor};
  }};
@@ -20,14 +22,14 @@ async function fixture(t){
  const open=()=>{
   checkoutStore=new node.SqliteCommerceStore(path);entitlementStore=new node.SqliteEntitlementStore(path);
   engine=new core.CheckoutEngine(coreScope,rights,provider,verifier,checkoutStore);ledger=new core.EntitlementLedger(coreScope,entitlementStore);
-  commerce=new WholeWorkCommerce({scope,checkout:engine,entitlements:ledger,commerceDigest:core.commerceDigest,
+  commerce=new WholeWorkCommerce({scope,recordingRegistry:registry,checkout:engine,entitlements:ledger,commerceDigest:core.commerceDigest,
    resolveCompleteWork:async()=>work,verifyCompleteWork:async()=>true,resolveBuyer:async actor=>({...buyer,identityId:actor.principalId}),
    resolveMerchant:async()=>manager,authorizePurchase:async(_request,proof)=>allow&&proof==='fixture-consent',
    authorizeRead:async()=>true,verifyFulfillment:async()=>fulfillment,territory:'US',now:()=>now});
  };
  open();t.after(()=>{checkoutStore.close();entitlementStore.close();});
  const input={tenantId:'tenant',applicationId:'app',principalId:'buyer',productId:'album',productRevision:1,operationId:'operation-000000000000000001',proof:'fixture-consent'};
- return {input,requests,get commerce(){return commerce},get ledger(){return ledger},buyer,
+ return {input,requests,registry,get commerce(){return commerce},get ledger(){return ledger},buyer,
   changeWork:change=>{work=change},get work(){return structuredClone(work)},deny:()=>{allow=false},
   pauseFulfillment:()=>{fulfillment=false},resumeFulfillment:()=>{fulfillment=true},
   async prepareSettlement(checkoutId){
@@ -72,5 +74,18 @@ test('changed catalog bytes cannot expand fulfillment from an immutable settled 
  f.changeWork({...f.work,product:{...f.work.product,priceMinor:'9000'}});
  const result=await f.commerce.settle(new Uint8Array([1]),'fixture-auth');
  assert.equal(result.state,'PENDING');assert.equal(result.fulfillmentPending,true);
+ assert.equal(f.ledger.access(f.buyer,'one','download',1500).allowed,false);
+});
+
+test('paid complete works cannot reuse bonus recordings or change recording creator identity',options,async t=>{
+ const f=await fixture(t);
+ f.registry.reserve({tenantId:'tenant',applicationId:'app',recordingId:'one',creatorId:'artist',entryId:'bonus',channel:'groove'});
+ await assert.rejects(f.commerce.startCheckout(f.input),/another identity or channel/);assert.equal(f.requests.length,0);
+});
+
+test('settled fulfillment cannot silently reassign a recording to another creator',options,async t=>{
+ const f=await fixture(t),pending=await f.commerce.startCheckout(f.input);await f.prepareSettlement(pending.checkoutId);
+ f.changeWork({...f.work,creatorId:'different-creator'});
+ await assert.rejects(f.commerce.settle(new Uint8Array([1]),'fixture-auth'),/paid recording identity/);
  assert.equal(f.ledger.access(f.buyer,'one','download',1500).allowed,false);
 });

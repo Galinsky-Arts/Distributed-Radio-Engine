@@ -6,18 +6,18 @@ const identity=value=>Object.freeze({principalId:id(value?.principalId,'buyer'),
  * Provider verification, storage and key enrollment are never reimplemented here.
  */
 export class WholeWorkCommerce{
- #scope;#coreScope;#checkout;#entitlements;#digest;#resolveWork;#verifyWork;#buyer;#merchant;#approve;#read;#fulfill;#now;#territory;#registered=new Map();
+ #scope;#coreScope;#checkout;#entitlements;#digest;#resolveWork;#verifyWork;#buyer;#merchant;#approve;#read;#fulfill;#now;#territory;#registry;#registered=new Map();
  constructor({scope,checkout,entitlements,commerceDigest,resolveCompleteWork,verifyCompleteWork,
-  resolveBuyer,resolveMerchant,authorizePurchase,authorizeRead,verifyFulfillment,territory,now=Date.now}={}){
+  resolveBuyer,resolveMerchant,authorizePurchase,authorizeRead,verifyFulfillment,recordingRegistry,territory,now=Date.now}={}){
   this.#scope=Object.freeze({tenantId:id(scope?.tenantId,'tenant'),applicationId:id(scope?.applicationId,'application'),merchantId:id(scope?.merchantId,'merchant')});
   if(!['createCheckout','readOrder','registerProduct','settle'].every(k=>typeof checkout?.[k]==='function')||
-   typeof entitlements?.grant!=='function'||![commerceDigest,resolveCompleteWork,verifyCompleteWork,resolveBuyer,resolveMerchant,
+   typeof entitlements?.grant!=='function'||typeof recordingRegistry?.reserve!=='function'||typeof recordingRegistry?.get!=='function'||![commerceDigest,resolveCompleteWork,verifyCompleteWork,resolveBuyer,resolveMerchant,
     authorizePurchase,authorizeRead,verifyFulfillment,now].every(fn=>typeof fn==='function')||!/^[A-Z]{2}$/.test(territory))
    throw new TypeError('DAE checkout/entitlement, complete-work, identity and transaction adapters required');
   this.#coreScope=Object.freeze({tenantId:this.#scope.tenantId,application:'distributed-radio',identityId:this.#scope.merchantId});
   this.#checkout=checkout;this.#entitlements=entitlements;this.#digest=commerceDigest;this.#resolveWork=resolveCompleteWork;
   this.#verifyWork=verifyCompleteWork;this.#buyer=resolveBuyer;this.#merchant=resolveMerchant;this.#approve=authorizePurchase;
-  this.#read=authorizeRead;this.#fulfill=verifyFulfillment;this.#territory=territory;this.#now=now;
+  this.#read=authorizeRead;this.#fulfill=verifyFulfillment;this.#registry=recordingRegistry;this.#territory=territory;this.#now=now;
  }
  #time(){const now=this.#now();if(!Number.isSafeInteger(now)||now<0)throw new RangeError('Invalid commerce clock');return now;}
  #identity(input){const actor=identity(input);if(actor.tenantId!==this.#scope.tenantId||actor.applicationId!==this.#scope.applicationId)throw new RangeError('Commerce actor scope mismatch');return actor;}
@@ -45,6 +45,17 @@ export class WholeWorkCommerce{
    if(old?.version!==version){
     if(!old&&this.#registered.size>=4096)throw new RangeError('Complete-work cache capacity reached');
     this.#checkout.registerProduct(manager,work.product,this.#time());this.#registered.set(productId,{version,digest});
+   }
+  }
+  const recordings=work.product.assets.filter(asset=>Array.isArray(asset.rightsLayers)&&asset.rightsLayers.some(layer=>['recording','spoken-work'].includes(layer)));
+  if(recordings.length<1)throw new RangeError('Complete audio work requires recording assets');
+  for(const asset of recordings){
+   const record={tenantId:this.#scope.tenantId,applicationId:this.#scope.applicationId,recordingId:asset.assetId,
+    creatorId:work.creatorId,entryId:asset.assetId,channel:'paid'};
+   if(register)this.#registry.reserve(record);
+   else {
+    const existing=this.#registry.get(record);
+    if(!existing||['creatorId','entryId','channel'].some(k=>existing[k]!==record[k]))throw new RangeError('Immutable paid recording identity mismatch');
    }
   }
   return {work,digest};
