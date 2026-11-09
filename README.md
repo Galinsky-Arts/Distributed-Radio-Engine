@@ -2,6 +2,10 @@
 
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
+**DRE-13 evidence contract:** [scope-bound physical-output adjudication](docs/speaker-evidence.md).
+The one-argument status-flag prototype is replaced by an explicit authenticated
+verifier boundary with deduplication/overlap checks. Software fixtures do not
+constitute calibrated-device evidence or authorize spendable point grants.
 **DRE-12 contribution software:** [policy, exact units and authenticated evidence
 boundary](docs/contribution-policy.md). Integer conservative energy equivalents
 remain provisional; real playback/evidence integration and later settlement gates
