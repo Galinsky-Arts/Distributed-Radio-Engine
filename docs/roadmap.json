@@ -1234,7 +1234,7 @@
     },
     {
       "id": "SS-30",
-      "title": "Controlled 10–20-speaker pilot",
+      "title": "Controlled 10\u201320-speaker pilot",
       "depends_on": [
         "SS-29"
       ],
@@ -1605,7 +1605,8 @@
       "depends_on": [
         "DRE-05",
         "DRE-16",
-        "DRE-17"
+        "DRE-17",
+        "DRE-19"
       ],
       "scope": "Creator-defined points offers, coupons, recordings and other lawful fan rewards; cost/budget/stock and atomic entitlement issuance.",
       "acceptance": "Concurrent redemption cannot overspend; failed grant restores balance; no paid-single disguise.",
