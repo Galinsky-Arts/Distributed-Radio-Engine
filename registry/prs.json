@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 3,
-  "observedAt": "2026-11-09T23:10:37Z",
+  "observedAt": "2026-11-09T23:52:09Z",
   "units": [
     {
       "id": "DRE-01",
@@ -492,15 +492,15 @@
       "number": 33,
       "title": "DRE-24: Whole-work checkout and durable purchase fulfillment",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/33",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-11-09T23:08:34Z",
-      "updatedAt": "2026-11-09T23:08:34Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "e7f05d6cc0cfb464ca2ad4d48f09b41ab0e6f26a",
+      "updatedAt": "2026-11-09T23:18:16Z",
+      "closedAt": "2026-11-09T23:18:16Z",
+      "mergedAt": "2026-11-09T23:18:16Z",
+      "headSha": "8a70cde14878910ed9e60fe7b744b09030adbba9",
       "baseRef": "main",
-      "mergeCommitSha": "14d99569d8aa1400e39a0992e2101cb6620ceeff"
+      "mergeCommitSha": "8feaf6913149f29131ca7938d7abb40570225136"
     },
     {
       "id": 5232581906,
@@ -552,15 +552,15 @@
       "number": 29,
       "title": "DRE-25: Creator and sponsor reporting",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/29",
-      "state": "open",
-      "draft": true,
+      "state": "closed",
+      "draft": false,
       "createdAt": "2026-10-18T22:16:12Z",
-      "updatedAt": "2026-10-18T22:16:12Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "f3bda867001fd5c687b1e85da7f4aaae4683e4b2",
+      "updatedAt": "2026-11-09T23:23:08Z",
+      "closedAt": "2026-11-09T23:23:08Z",
+      "mergedAt": "2026-11-09T23:23:08Z",
+      "headSha": "434e67a04be873444420f7af064d73f74934e146",
       "baseRef": "main",
-      "mergeCommitSha": "cd1826cc3a1a344ebeb1278976dcd8f3a1b6ac97"
+      "mergeCommitSha": "9c1a10b7270354b3df4c3cee0700d617b70c182c"
     },
     {
       "id": 4913294833,
