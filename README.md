@@ -2,6 +2,9 @@
 
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
+**DRE-14 preview contract:** [authenticated provisional progress](docs/provisional-progress.md)
+uses a scoped producer verifier, nonoverlapping exact windows and terminal
+interruption tombstones. It never creates spendable point credit.
 **DRE-13 evidence contract:** [scope-bound physical-output adjudication](docs/speaker-evidence.md).
 The one-argument status-flag prototype is replaced by an explicit authenticated
 verifier boundary with deduplication/overlap checks. Software fixtures do not

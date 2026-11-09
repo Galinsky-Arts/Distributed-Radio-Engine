@@ -7,6 +7,7 @@ export * from './program.mjs';
 export * from './rotation.mjs';
 export * from './interstitial.mjs';
 export * from './sponsors.mjs';
+export * from './provisional-progress.mjs';
 export * from './speaker-evidence.mjs';
 export * from './contribution-policy.mjs';
 export * from './radio-join.mjs';
