@@ -1,5 +1,5 @@
 {
-  "repository": "neophilism/Distributed-Radio-Engine",
+  "repository": "Galinsky-Arts/Distributed-Radio-Engine",
   "title": "Distributed-Radio-Engine",
   "planVerified": true,
   "plannedPrCount": 28,
@@ -9,8 +9,8 @@
   ],
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
-  "roadmapVersion": 1,
-  "observedAt": "2026-10-11T17:40:54.792Z",
+  "roadmapVersion": 3,
+  "observedAt": "2026-11-09T22:41:10Z",
   "units": [
     {
       "id": "DRE-01",
@@ -20,8 +20,16 @@
         2
       ],
       "dependsOn": [],
-      "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalDependencies": [
+        {
+          "repository": "Galinsky-Arts/Distributed-Audio-Engine",
+          "unitId": "DAE-23"
+        }
+      ],
+      "externalPrerequisites": [],
+      "scope": "Establish neutral radio engine, generic creators/publishers, media items and show contracts. No TrackZero branding, venue or location policy.",
+      "acceptance": "A music and a documentary consumer compile against the same public contracts.",
+      "gate": "Software"
     },
     {
       "id": "DRE-02",
@@ -30,9 +38,14 @@
       "prs": [
         3
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-01"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Artist, organization, station ownership and collaborator roles with tenant/application isolation and endpoint device authority.",
+      "acceptance": "External account login alone cannot enroll a decrypting recipient.",
+      "gate": "Software"
     },
     {
       "id": "DRE-03",
@@ -41,9 +54,14 @@
       "prs": [
         4
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-02"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Artist/organization-controlled programming, collaborator scopes and signed revision approvals.",
+      "acceptance": "Unauthorized sequencing or sponsor insertion fails; approvals bind exact program digest.",
+      "gate": "Software"
     },
     {
       "id": "DRE-04",
@@ -52,9 +70,14 @@
       "prs": [
         5
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-02"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Music, news, documentaries, talk shows, episodes and creator attribution; assets consume core encrypted packaging.",
+      "acceptance": "Music and spoken-work fixtures use the same pipeline without song-specific assumptions.",
+      "gate": "Software"
     },
     {
       "id": "DRE-05",
@@ -63,9 +86,15 @@
       "prs": [
         6
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-03",
+        "DRE-04"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Required composition/recording or spoken-work permissions, territory, release window and cache/reward grants.",
+      "acceptance": "Missing uses prevent publishing; revocation does not invent recall of already delivered files.",
+      "gate": "Software"
     },
     {
       "id": "DRE-06",
@@ -74,9 +103,14 @@
       "prs": [
         7
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-05"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Compile content, opening identification, closing identification and before-next-intro reward markers into the common timeline.",
+      "acceptance": "Points closure always follows the full matching outro; opportunities occur before the next intro.",
+      "gate": "Software"
     },
     {
       "id": "DRE-07",
@@ -85,9 +119,14 @@
       "prs": [
         8
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-06"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Scheduled shows, recurring blocks, fallback sets and future-effective revisions owned by the broadcaster.",
+      "acceptance": "Continuous station survives publisher disconnection; no user-selectable on-demand track playback.",
+      "gate": "Software"
     },
     {
       "id": "DRE-08",
@@ -96,9 +135,14 @@
       "prs": [
         9
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-06"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Uploaded/recorded station IDs and deterministic per-content identification metadata, including That was SONG by ARTIST on STATION radio.",
+      "acceptance": "Silent placeholders never count as completed required identification; artist controls actual audio.",
+      "gate": "Software"
     },
     {
       "id": "DRE-09",
@@ -107,194 +151,634 @@
       "prs": [
         11
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-07",
+        "DRE-08"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Broadcaster-approved ads, campaigns and split accounting on one authoritative station sequence.",
+      "acceptance": "No individualized audio ad insertion changes playback timeline; ads do not earn song points.",
+      "gate": "Software"
     },
     {
       "id": "DRE-10",
       "title": "Always-on encrypted station operations",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        14
+      ],
+      "dependsOn": [
+        "DRE-07",
+        "DRE-09"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Endpoint prepublication of encrypted audio/programs, autonomous ciphertext scheduler, recovery and fixed approved versions.",
+      "acceptance": "Station keeps broadcasting without artist phone; relay/storage never receives media decryption keys.",
+      "gate": "Software"
     },
     {
       "id": "DRE-11",
       "title": "Radio join and playback SDK facade",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        18
+      ],
+      "dependsOn": [
+        "DRE-10"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Guest live radio, current timeline join, native/web wrappers and backpressure/recovery.",
+      "acceptance": "Tuning in joins current program; supported client types expose honest route/evidence states.",
+      "gate": "Software"
     },
     {
       "id": "DRE-12",
       "title": "Contribution point policy and units",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        19
+      ],
+      "dependsOn": [
+        "DRE-05",
+        "DRE-11"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "One creator-specific metric: conservative measured acoustic-energy equivalents integrated over qualifying time. Threshold, reference level, safety ceiling and versioned unit fixed in policies.",
+      "acceptance": "No headphone, software-slider or subthreshold credit. Accounted quantity is points, not summed physical decibels.",
+      "gate": "Software"
     },
     {
       "id": "DRE-13",
       "title": "Independent multi-speaker evidence",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        20
+      ],
+      "dependsOn": [
+        "DRE-12"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Deduplicate physical output identities and calibrated source evidence; sum distinct verified output contributions, never a combined field plus its component speakers.",
+      "acceptance": "One output fanned out through multiple clients counts once; unverified 1000-speaker declarations earn nothing.",
+      "gate": "Software"
     },
     {
       "id": "DRE-14",
       "title": "Realtime provisional point progress",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        21
+      ],
+      "dependsOn": [
+        "DRE-12",
+        "DRE-13"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Preview per-content points while playback is active; do not create spendable balance yet.",
+      "acceptance": "Preview and settled balances remain distinct; failed evidence windows earn zero.",
+      "gate": "Software"
     },
     {
       "id": "DRE-15",
       "title": "Outro-complete point vesting",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        22
+      ],
+      "dependsOn": [
+        "DRE-06",
+        "DRE-08",
+        "DRE-14"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Award once per completed broadcast occurrence only after full content and its closing identification; stop, pause, seek, mute or route interruption forfeits provisional cycle. Late join starts eligibility at next full cycle.",
+      "acceptance": "Race/replay and cross-station duplicate-cycle tests vest once; stopping during outro vests zero.",
+      "gate": "Software"
     },
     {
       "id": "DRE-16",
       "title": "Creator-specific transactional point wallets",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        23
+      ],
+      "dependsOn": [
+        "DRE-15"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Append-only earn/spend ledger, fixed-point units, idempotency, persistence, concurrency and creator isolation.",
+      "acceptance": "No transferable universal wallet; spending one artist balance cannot consume another.",
+      "gate": "Software"
     },
     {
       "id": "DRE-17",
       "title": "Default exponential reward price ladder",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        24
+      ],
+      "dependsOn": [
+        "DRE-16"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Slow initial increases that transition into unbounded exponential growth with arbitrary precision, creator overrides and immutable offer-price snapshots.",
+      "acceptance": "High tiers exceed feasible 1000-speaker all-day examples; no floating-point balance overflow or retroactive repricing.",
+      "gate": "Software"
     },
     {
       "id": "DRE-18",
       "title": "Points reward catalog and atomic redemption",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        31
+      ],
+      "dependsOn": [
+        "DRE-05",
+        "DRE-16",
+        "DRE-17",
+        "DRE-19"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Creator-defined points offers, coupons, recordings and other lawful fan rewards; cost/budget/stock and atomic entitlement issuance.",
+      "acceptance": "Concurrent redemption cannot overspend; failed grant restores balance; no paid-single disguise.",
+      "gate": "Software"
     },
     {
       "id": "DRE-19",
       "title": "Separate Unlocked Groove catalog",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        25
+      ],
+      "dependsOn": [
+        "DRE-05"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "App-exclusive bonus recordings separated from point offers and paid catalog. Distinct alternate takes have distinct recording IDs.",
+      "acceptance": "The same recording cannot be silently offered in both reward channels; prior entitlements survive edits.",
+      "gate": "Software"
     },
     {
       "id": "DRE-20",
       "title": "Shared transition opportunity scheduler",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        26
+      ],
+      "dependsOn": [
+        "DRE-06",
+        "DRE-19"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Broadcaster-defined every x-to-y completed content cadence, one shared timeline opportunity after outro and before next intro.",
+      "acceptance": "One opportunity ID/time reaches all connected clients; joining/reconnecting cannot reroll it.",
+      "gate": "Software"
     },
     {
       "id": "DRE-21",
       "title": "Exponential rarity and fair eligibility",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        27
+      ],
+      "dependsOn": [
+        "DRE-20"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Configurable exponentially decreasing rarity weights, listener lifetime completion gates and seeded auditable server/issuer draws with positive-tail probabilities.",
+      "acceptance": "Superlisteners retain access to rare tiers; rarity does not decrease to zero merely because they listen longer.",
+      "gate": "Software"
     },
     {
       "id": "DRE-22",
       "title": "Listener completion progress including headphones",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        28
+      ],
+      "dependsOn": [
+        "DRE-11",
+        "DRE-15",
+        "DRE-21"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Recoverable per-creator completed-listen history; headphones are eligible for Grooves and never speaker points.",
+      "acceptance": "Changing output route does not reroll opportunities; muted/background-halted playback is not completion.",
+      "gate": "Software"
     },
     {
       "id": "DRE-23",
       "title": "Groove grant ledger and secure delivery",
       "origin": "addition",
       "prs": [],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-19",
+        "DRE-20",
+        "DRE-21",
+        "DRE-22"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Idempotent grants, bounded budgets/stock, duplicate protection and endpoint-only content access; program continues while UI reveals reward.",
+      "acceptance": "Replay/reconnect grants once; personalized reward never replaces radio audio or desynchronizes listeners.",
+      "gate": "Software"
     },
     {
       "id": "DRE-24",
       "title": "Commerce and complete-work products",
       "origin": "addition",
       "prs": [],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-04",
+        "DRE-18",
+        "DRE-23"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Whole albums for music and complete show/documentary works for nonmusic; optional tips/gifts, splits and provider adapters.",
+      "acceptance": "Paid standalone music singles remain unsupported; purchases never require speaker participation.",
+      "gate": "Software"
     },
     {
       "id": "DRE-25",
       "title": "Creator and sponsor reporting",
       "origin": "addition",
-      "prs": [],
-      "dependsOn": [],
+      "prs": [
+        29
+      ],
+      "dependsOn": [
+        "DRE-09",
+        "DRE-16",
+        "DRE-23",
+        "DRE-24"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Output contribution, lifetime/balance points, grants and transactions reported independently from audience estimates.",
+      "acceptance": "Out-loud output does not assert a particular number of people heard it; no exact location requirement.",
+      "gate": "Software"
     },
     {
       "id": "DRE-26",
       "title": "E2EESA security, privacy and recovery",
       "origin": "addition",
       "prs": [],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-10",
+        "DRE-13",
+        "DRE-16",
+        "DRE-23"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Client-origin encrypted radio/rewards, endpoint-authorized keys, metadata minimization, recovery and dependency/secret gates.",
+      "acceptance": "No private content, raw ambient audio or secret key in infrastructure/logs; declared operational metadata inventoried.",
+      "gate": "Software"
     },
     {
       "id": "DRE-27",
       "title": "Mixed-content and radio integration pilot",
       "origin": "addition",
       "prs": [],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-18",
+        "DRE-23",
+        "DRE-24",
+        "DRE-25",
+        "DRE-26"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "End-to-end music and news/documentary consumer fixtures, encrypted playback, vesting/spend and timed Grooves.",
+      "acceptance": "Actual supported-output evidence distinct from simulations; all semantic paths tested.",
+      "gate": "Software"
     },
     {
       "id": "DRE-28",
       "title": "Stable reusable radio release",
       "origin": "addition",
       "prs": [],
-      "dependsOn": [],
+      "dependsOn": [
+        "DRE-27"
+      ],
       "externalDependencies": [],
-      "externalPrerequisites": []
+      "externalPrerequisites": [],
+      "scope": "Native consumer contracts, developer kit, support matrix, independent security review and release evidence.",
+      "acceptance": "No TrackZero dependency or branding in engine; unresolved assurance gates block production claim.",
+      "gate": "Software"
     }
   ],
   "pullRequests": [
     {
+      "id": 5232374725,
+      "number": 31,
+      "title": "DRE-18: Atomic point rewards and entitlement issuance",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/31",
+      "state": "open",
+      "draft": true,
+      "createdAt": "2026-11-09T22:39:59Z",
+      "updatedAt": "2026-11-09T22:39:59Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "1c2dfbdfc0ff75b4073f6bf1e2a4cdfb575d382c",
+      "baseRef": "main",
+      "mergeCommitSha": "a3960ac241a0d49373bd941ee8d96c7fa862cc1c"
+    },
+    {
+      "id": 4941650396,
+      "number": 30,
+      "title": "Integrate Development Deployment Monitor (inventory-only)",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/30",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-20T19:57:48Z",
+      "updatedAt": "2026-10-20T20:02:15Z",
+      "closedAt": "2026-10-20T20:02:15Z",
+      "mergedAt": "2026-10-20T20:02:15Z",
+      "headSha": "f39448bb684ddfb5045641f9fc97c6585a116091",
+      "baseRef": "main",
+      "mergeCommitSha": "d919e807c61978119acb84aafbf8672cbb62be8e"
+    },
+    {
+      "id": 4913306717,
+      "number": 29,
+      "title": "DRE-25: Creator and sponsor reporting",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/29",
+      "state": "open",
+      "draft": true,
+      "createdAt": "2026-10-18T22:16:12Z",
+      "updatedAt": "2026-10-18T22:16:12Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "f3bda867001fd5c687b1e85da7f4aaae4683e4b2",
+      "baseRef": "main",
+      "mergeCommitSha": "cd1826cc3a1a344ebeb1278976dcd8f3a1b6ac97"
+    },
+    {
+      "id": 4913294833,
+      "number": 28,
+      "title": "DRE-22: Listener completion progress including headphones",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/28",
+      "state": "open",
+      "draft": true,
+      "createdAt": "2026-10-18T22:14:20Z",
+      "updatedAt": "2026-11-01T18:13:06Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "2b2f668738996580de6007b9ea38b79824213e1f",
+      "baseRef": "main",
+      "mergeCommitSha": "154f64608cf9c09bf478dc99ff351c27690f3633"
+    },
+    {
+      "id": 4913289647,
+      "number": 27,
+      "title": "DRE-21: Exponential rarity and fair eligibility",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/27",
+      "state": "open",
+      "draft": true,
+      "createdAt": "2026-10-18T22:13:33Z",
+      "updatedAt": "2026-11-01T18:11:12Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "375ab247a73f55e0e3ac917c6b7cf7c1960f66a0",
+      "baseRef": "main",
+      "mergeCommitSha": "da40a491a7c1def2ca09fde670e5fe41b409d45a"
+    },
+    {
+      "id": 4913284374,
+      "number": 26,
+      "title": "DRE-20: Shared transition opportunity scheduler",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/26",
+      "state": "open",
+      "draft": true,
+      "createdAt": "2026-10-18T22:12:46Z",
+      "updatedAt": "2026-11-01T18:09:00Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "59b091938211a6e693b8eb842ce83e7951ea02d8",
+      "baseRef": "main",
+      "mergeCommitSha": "5e776639c15031ef4fe4ff1778dbbbea749f17db"
+    },
+    {
+      "id": 4913278983,
+      "number": 25,
+      "title": "DRE-19: Separate Unlocked Groove catalog",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/25",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-18T22:11:55Z",
+      "updatedAt": "2026-11-09T22:38:52Z",
+      "closedAt": "2026-11-09T22:38:52Z",
+      "mergedAt": "2026-11-09T22:38:52Z",
+      "headSha": "bb88d07061d5c4ee1f43dc9932c5449c3396f155",
+      "baseRef": "main",
+      "mergeCommitSha": "b5a2773e9273a555816f5800255feef5ead7902d"
+    },
+    {
+      "id": 4913271527,
+      "number": 24,
+      "title": "DRE-17: Default exponential reward price ladder",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/24",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-18T22:10:44Z",
+      "updatedAt": "2026-11-09T22:35:05Z",
+      "closedAt": "2026-11-09T22:35:04Z",
+      "mergedAt": "2026-11-09T22:35:04Z",
+      "headSha": "5c6d9b245a84ee964df00c30522778ac18285261",
+      "baseRef": "main",
+      "mergeCommitSha": "dc9250c655ed8c5ca030db8f114950affae6a14a"
+    },
+    {
+      "id": 4913266613,
+      "number": 23,
+      "title": "DRE-16: Creator-specific transactional point wallets",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/23",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-18T22:09:56Z",
+      "updatedAt": "2026-11-09T22:33:02Z",
+      "closedAt": "2026-11-09T22:33:02Z",
+      "mergedAt": "2026-11-09T22:33:02Z",
+      "headSha": "0404819a20883f5c8a002443c93e2ca49f7a39bc",
+      "baseRef": "main",
+      "mergeCommitSha": "294617a31abd4b2a56267069180ea10ed35d2345"
+    },
+    {
+      "id": 4913002751,
+      "number": 22,
+      "title": "DRE-15: Outro-complete point vesting",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/22",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-18T21:34:29Z",
+      "updatedAt": "2026-11-09T22:29:40Z",
+      "closedAt": "2026-11-09T22:29:40Z",
+      "mergedAt": "2026-11-09T22:29:40Z",
+      "headSha": "7d0204de6ab72bb6dfadaca3f99397aeac0f97d5",
+      "baseRef": "main",
+      "mergeCommitSha": "215cbe43866a131880137be4b6d3fe1fd52d7f20"
+    },
+    {
+      "id": 4912996942,
+      "number": 21,
+      "title": "DRE-14: Realtime provisional point progress",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/21",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-18T21:33:35Z",
+      "updatedAt": "2026-11-09T22:27:25Z",
+      "closedAt": "2026-11-09T22:27:24Z",
+      "mergedAt": "2026-11-09T22:27:24Z",
+      "headSha": "0df507f34a32b590bbf8b25373dcc2dc2aeeda06",
+      "baseRef": "main",
+      "mergeCommitSha": "c9e0fc17c4f0aa4c4a5ff985dbe3b636c52701ea"
+    },
+    {
+      "id": 4912991411,
+      "number": 20,
+      "title": "DRE-13: Independent multi-speaker evidence",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/20",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-18T21:32:45Z",
+      "updatedAt": "2026-11-09T22:26:08Z",
+      "closedAt": "2026-11-09T22:26:08Z",
+      "mergedAt": "2026-11-09T22:26:08Z",
+      "headSha": "75b9c2d2782b357914dbd1c06cd6738c9747ec4b",
+      "baseRef": "main",
+      "mergeCommitSha": "6e9ed945a33412d8910a478656c030db6cfe9fdc"
+    },
+    {
+      "id": 4912985156,
+      "number": 19,
+      "title": "DRE-12: Contribution point policy and units",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/19",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-18T21:31:45Z",
+      "updatedAt": "2026-11-09T22:23:55Z",
+      "closedAt": "2026-11-09T22:23:54Z",
+      "mergedAt": "2026-11-09T22:23:54Z",
+      "headSha": "be47a091a686330fdd77efbcdd6fbbe98af7f530",
+      "baseRef": "main",
+      "mergeCommitSha": "77ecacd02566ec2ce8ba979c50495aa9ba054d3f"
+    },
+    {
+      "id": 4912979344,
+      "number": 18,
+      "title": "DRE-11: Radio join and playback SDK facade",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/18",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-18T21:30:50Z",
+      "updatedAt": "2026-11-09T22:21:07Z",
+      "closedAt": "2026-11-09T22:21:07Z",
+      "mergedAt": "2026-11-09T22:21:07Z",
+      "headSha": "79e9cb919813769a79f9a8bdabbe560a10f48ab8",
+      "baseRef": "main",
+      "mergeCommitSha": "5d21bb692d8c2a25adc53c23ec183a6fe013e9fb"
+    },
+    {
+      "id": 4890541583,
+      "number": 17,
+      "title": "Remove human-audit prerequisite from radio service readiness explanations",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/17",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-16T15:26:14Z",
+      "updatedAt": "2026-10-16T15:27:14Z",
+      "closedAt": "2026-10-16T15:27:14Z",
+      "mergedAt": "2026-10-16T15:27:14Z",
+      "headSha": "52c2d9e1585fe4568a3d7cf4dde1a9f9e70a487f",
+      "baseRef": "main",
+      "mergeCommitSha": "d60ea0b88f8353e3c52833242bbc7b2973683fdb"
+    },
+    {
+      "id": 4848584620,
+      "number": 16,
+      "title": "Standardize canonical PR registry for Boardroom and Engine Room",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/16",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-13T19:46:35Z",
+      "updatedAt": "2026-10-13T19:52:50Z",
+      "closedAt": "2026-10-13T19:52:50Z",
+      "mergedAt": "2026-10-13T19:52:50Z",
+      "headSha": "74e44536faa213e90b1bd9f725b95011e2bae4a3",
+      "baseRef": "main",
+      "mergeCommitSha": "e03aa1a4f2d17908e0031e42b8df5168765355ba"
+    },
+    {
+      "id": 4848079950,
+      "number": 15,
+      "title": "Owner policy: proceed with AI security review; defer external audit",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/15",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-13T19:02:25Z",
+      "updatedAt": "2026-10-13T19:09:06Z",
+      "closedAt": "2026-10-13T19:09:06Z",
+      "mergedAt": "2026-10-13T19:09:06Z",
+      "headSha": "75f9b3c5f46ac399b25febc1f9ff4ac1c92553e0",
+      "baseRef": "main",
+      "mergeCommitSha": "490ee30d8e1cdb779937df4787d70443ae7ca30c"
+    },
+    {
+      "id": 4847268079,
+      "number": 14,
+      "title": "DRE-10: establish ciphertext-only autonomous radio playout authorization gate",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/14",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-13T17:52:56Z",
+      "updatedAt": "2026-11-09T22:17:26Z",
+      "closedAt": "2026-11-09T22:17:26Z",
+      "mergedAt": "2026-11-09T22:17:26Z",
+      "headSha": "270cf57e5268065b0919f01160a07eaf3419d744",
+      "baseRef": "main",
+      "mergeCommitSha": "7925ff242cd9a57fefcc6c9f4a11ef4d69fba2db"
+    },
+    {
+      "id": 4830256202,
+      "number": 13,
+      "title": "Track E2EESA implementation, full testing and independent expert review",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/13",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-10-12T13:41:22Z",
+      "updatedAt": "2026-10-12T14:18:55Z",
+      "closedAt": "2026-10-12T14:18:55Z",
+      "mergedAt": "2026-10-12T14:18:55Z",
+      "headSha": "0a85fb44fa5015660aa5f98752b40260cac1bdd6",
+      "baseRef": "main",
+      "mergeCommitSha": "1ccaaff5d999b4a405fc186c1352815560e82b84"
+    },
+    {
       "id": 4807489430,
       "number": 12,
       "title": "Deployable development status and readiness service",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/12",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/12",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:57:07.000Z",
-      "updatedAt": "2026-10-10T01:06:17.000Z",
-      "closedAt": "2026-10-10T01:06:17.000Z",
-      "mergedAt": "2026-10-10T01:06:17.000Z",
+      "createdAt": "2026-10-10T00:57:07Z",
+      "updatedAt": "2026-10-10T01:06:17Z",
+      "closedAt": "2026-10-10T01:06:17Z",
+      "mergedAt": "2026-10-10T01:06:17Z",
       "headSha": "30844e7c93e188d54b7cfae07737db0d1bda3a68",
       "baseRef": "main",
       "mergeCommitSha": "544688d85d9b2dc29fa756a8ac854760b68a7e96"
@@ -303,13 +787,13 @@
       "id": 4807475085,
       "number": 11,
       "title": "DRE-09: approved common-program sponsorship accounting",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/11",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/11",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:54:56.000Z",
-      "updatedAt": "2026-10-10T01:06:56.000Z",
-      "closedAt": "2026-10-10T01:06:56.000Z",
-      "mergedAt": "2026-10-10T01:06:56.000Z",
+      "createdAt": "2026-10-10T00:54:56Z",
+      "updatedAt": "2026-10-10T01:06:56Z",
+      "closedAt": "2026-10-10T01:06:56Z",
+      "mergedAt": "2026-10-10T01:06:56Z",
       "headSha": "439262761d23ef079c32b8930017288dde41aae0",
       "baseRef": "main",
       "mergeCommitSha": "fed91bf8fe5ae999e35c595e0efdf040ea6aef47"
@@ -318,13 +802,13 @@
       "id": 4807471728,
       "number": 10,
       "title": "Register Distributed Radio Engine with Engine Room project manifest",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/10",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/10",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:54:19.000Z",
-      "updatedAt": "2026-10-10T01:06:51.000Z",
-      "closedAt": "2026-10-10T01:06:50.000Z",
-      "mergedAt": "2026-10-10T01:06:50.000Z",
+      "createdAt": "2026-10-10T00:54:19Z",
+      "updatedAt": "2026-10-10T01:06:51Z",
+      "closedAt": "2026-10-10T01:06:50Z",
+      "mergedAt": "2026-10-10T01:06:50Z",
       "headSha": "76f2f655618c404fc0ce2c0b73c7c076f666fefd",
       "baseRef": "main",
       "mergeCommitSha": "b3c30d953095eca476da9471bf0a51233ee76e10"
@@ -333,13 +817,13 @@
       "id": 4807467938,
       "number": 9,
       "title": "DRE-08: artist-controlled recorded station identifications",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/9",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/9",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:53:43.000Z",
-      "updatedAt": "2026-10-10T01:06:45.000Z",
-      "closedAt": "2026-10-10T01:06:45.000Z",
-      "mergedAt": "2026-10-10T01:06:44.000Z",
+      "createdAt": "2026-10-10T00:53:43Z",
+      "updatedAt": "2026-10-10T01:06:45Z",
+      "closedAt": "2026-10-10T01:06:45Z",
+      "mergedAt": "2026-10-10T01:06:44Z",
       "headSha": "f47d3ff3324e76c4f9c6078d5e0287ef22dcffce",
       "baseRef": "main",
       "mergeCommitSha": "c360697120080d2133032eab4b308d57b041d416"
@@ -348,13 +832,13 @@
       "id": 4807463153,
       "number": 8,
       "title": "DRE-07: broadcaster-independent loops and future revisions",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/8",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/8",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:52:56.000Z",
-      "updatedAt": "2026-10-10T01:06:32.000Z",
-      "closedAt": "2026-10-10T01:06:32.000Z",
-      "mergedAt": "2026-10-10T01:06:32.000Z",
+      "createdAt": "2026-10-10T00:52:56Z",
+      "updatedAt": "2026-10-10T01:06:32Z",
+      "closedAt": "2026-10-10T01:06:32Z",
+      "mergedAt": "2026-10-10T01:06:32Z",
       "headSha": "d2b7b2df74fe81b69ba7817c594a4d3b5bf892e8",
       "baseRef": "main",
       "mergeCommitSha": "a6fe334a764aed9c7a15ecd7663520b9eb4af52c"
@@ -363,13 +847,13 @@
       "id": 4807459732,
       "number": 7,
       "title": "DRE-06: approved linear program compiler and outro boundaries",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/7",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/7",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:52:21.000Z",
-      "updatedAt": "2026-10-10T00:56:05.000Z",
-      "closedAt": "2026-10-10T00:56:05.000Z",
-      "mergedAt": "2026-10-10T00:56:05.000Z",
+      "createdAt": "2026-10-10T00:52:21Z",
+      "updatedAt": "2026-10-10T00:56:05Z",
+      "closedAt": "2026-10-10T00:56:05Z",
+      "mergedAt": "2026-10-10T00:56:05Z",
       "headSha": "15a9b9f25c8e30c3474796a6543e53859ca937b4",
       "baseRef": "main",
       "mergeCommitSha": "39a71bfe28fae205283a979c89e0b4efea42fa56"
@@ -378,13 +862,13 @@
       "id": 4807439507,
       "number": 6,
       "title": "DRE-05: explicit publishing-rights gates",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/6",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/6",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:48:48.000Z",
-      "updatedAt": "2026-10-10T00:55:47.000Z",
-      "closedAt": "2026-10-10T00:55:47.000Z",
-      "mergedAt": "2026-10-10T00:55:47.000Z",
+      "createdAt": "2026-10-10T00:48:48Z",
+      "updatedAt": "2026-10-10T00:55:47Z",
+      "closedAt": "2026-10-10T00:55:47Z",
+      "mergedAt": "2026-10-10T00:55:47Z",
       "headSha": "6038938cbd0b59f0f94b5c4d7f04b1e610b90c14",
       "baseRef": "main",
       "mergeCommitSha": "ef3275e0bace2f59489c3a5a2f808aa995e67110"
@@ -393,13 +877,13 @@
       "id": 4807435977,
       "number": 5,
       "title": "DRE-04: tenant-isolated music and spoken-work catalog",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/5",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/5",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:48:11.000Z",
-      "updatedAt": "2026-10-10T00:55:37.000Z",
-      "closedAt": "2026-10-10T00:55:37.000Z",
-      "mergedAt": "2026-10-10T00:55:37.000Z",
+      "createdAt": "2026-10-10T00:48:11Z",
+      "updatedAt": "2026-10-10T00:55:37Z",
+      "closedAt": "2026-10-10T00:55:37Z",
+      "mergedAt": "2026-10-10T00:55:37Z",
       "headSha": "a4ab377c3d45c5188695381d893700d1dd877c69",
       "baseRef": "main",
       "mergeCommitSha": "603a7774dbc1c5abb11e5a8981252bbfcd4d6579"
@@ -408,13 +892,13 @@
       "id": 4807432127,
       "number": 4,
       "title": "DRE-03: digest-bound broadcaster editorial approvals",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/4",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/4",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:47:27.000Z",
-      "updatedAt": "2026-10-10T00:55:16.000Z",
-      "closedAt": "2026-10-10T00:55:16.000Z",
-      "mergedAt": "2026-10-10T00:55:16.000Z",
+      "createdAt": "2026-10-10T00:47:27Z",
+      "updatedAt": "2026-10-10T00:55:16Z",
+      "closedAt": "2026-10-10T00:55:16Z",
+      "mergedAt": "2026-10-10T00:55:16Z",
       "headSha": "971266a04f4b7779b7f1f160506fa1df380c110b",
       "baseRef": "main",
       "mergeCommitSha": "1f958895e5aaf6982c29a1f73f097a37b4422671"
@@ -423,13 +907,13 @@
       "id": 4807426915,
       "number": 3,
       "title": "DRE-02: tenant-scoped station roles and endpoint authorization",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/3",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/3",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:46:36.000Z",
-      "updatedAt": "2026-10-10T00:47:38.000Z",
-      "closedAt": "2026-10-10T00:47:38.000Z",
-      "mergedAt": "2026-10-10T00:47:38.000Z",
+      "createdAt": "2026-10-10T00:46:36Z",
+      "updatedAt": "2026-10-10T00:47:38Z",
+      "closedAt": "2026-10-10T00:47:38Z",
+      "mergedAt": "2026-10-10T00:47:38Z",
       "headSha": "cc7809429ab2af3e57a93d42b7e62a6ce411aaf1",
       "baseRef": "main",
       "mergeCommitSha": "41c30f3799d92f1ecb68418ed40f167b03c68ef2"
@@ -438,13 +922,13 @@
       "id": 4807424177,
       "number": 2,
       "title": "DRE-01: reusable station and content contracts with automated tests",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/2",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/2",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-10T00:46:05.000Z",
-      "updatedAt": "2026-10-10T00:46:42.000Z",
-      "closedAt": "2026-10-10T00:46:42.000Z",
-      "mergedAt": "2026-10-10T00:46:42.000Z",
+      "createdAt": "2026-10-10T00:46:05Z",
+      "updatedAt": "2026-10-10T00:46:42Z",
+      "closedAt": "2026-10-10T00:46:42Z",
+      "mergedAt": "2026-10-10T00:46:42Z",
       "headSha": "e3570d09f2a6941a10a6cd9afd99eba2a4b33c24",
       "baseRef": "main",
       "mergeCommitSha": "804c5ecea6b0b34a1e6d908879869d9570edebc5"
@@ -453,13 +937,13 @@
       "id": 4805779840,
       "number": 1,
       "title": "Distributed-Radio-Engine: specification, E2EESA policy and revised development plan",
-      "url": "https://github.com/neophilism/Distributed-Radio-Engine/pull/1",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/1",
       "state": "closed",
       "draft": false,
-      "createdAt": "2026-10-09T20:56:44.000Z",
-      "updatedAt": "2026-10-09T20:59:05.000Z",
-      "closedAt": "2026-10-09T20:59:05.000Z",
-      "mergedAt": "2026-10-09T20:59:05.000Z",
+      "createdAt": "2026-10-09T20:56:44Z",
+      "updatedAt": "2026-10-09T20:59:05Z",
+      "closedAt": "2026-10-09T20:59:05Z",
+      "mergedAt": "2026-10-09T20:59:05Z",
       "headSha": "eab33093a8610505b0c11fedc6b30551d2f3ef96",
       "baseRef": "main",
       "mergeCommitSha": "cfd6ef320ff6a931c0f5cd46cc4960fc428958db"
