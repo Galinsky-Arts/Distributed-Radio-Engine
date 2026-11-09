@@ -1,22 +1,35 @@
-# Distributed Radio Engine — implementation and release evidence
+# Distributed Radio Engine — implementation and evidence
 
-This page tracks implementation *in this repository*, separately from the upstream Distributed Audio Engine status.
+November 9, 2026 software checkpoint. Live GitHub PRs and their exact tested
+heads are authoritative; `registry/prs.json` records dated observations.
 
-| Roadmap | Implemented | Integration | Field / independent evidence |
-| --- | --- | --- | --- |
-| DRE-01 | Portable neutral station/media contracts; test suite | Upstream DAE-23 version and consumer-install smoke **pending** | Not claimed |
-| DRE-02–DRE-28 | Planned | Not integrated | Not claimed |
+DRE-01–DRE-15 have merged development implementations. They cover scoped station
+roles, catalog and publishing rights, common editorial programs, identifications,
+sponsors, durable ciphertext-only scheduling, a web/native playback facade,
+conservative contribution arithmetic, physical-output deduplication, provisional
+progress and durable full-outro receipts. DRE-16 adds durable creator-specific
+wallets and receipt-to-wallet integration. These are software boundaries with
+explicit trusted adapters, not a deployed station or verified loudspeaker network.
 
-The neutral interfaces do not implement media encryption, keys, acoustic validation, payments or listener privacy. Those remain external dependencies or later packages. A green unit test is not authorization to publish a production radio service.
+Local checks cover process-exit SQLite recovery, multiple connections/processes,
+stale-worker fencing, publication conflicts, replay, interruption forfeiture,
+creator separation, exact arithmetic and ledger reconciliation. The wallet
+integration uses an actual reopened receipt database and rejects altered or
+missing receipts. Hosted checks must pass at the exact PR head before merge.
 
-## Deployment
+## Remaining integration
 
-There is currently no deployed production station or listener application. Future Render preview health and readiness endpoints must explicitly describe their limited scope, and must not claim that secure streaming or verified speaker rewards are operational.
+- Production identity/device enrollment, authenticated endpoint bootstrap,
+  ciphertext relay deployment and actual browser/native media playback.
+- Calibrated physical-source attribution, route/device qualification, audible
+  interruption latency, battery and long-duration field tests.
+- DRE-17 onward: versioned reward pricing, atomic point redemptions, separate
+  bonus catalog, shared transitions, completion/grants, commerce and reporting.
+- Provider-backed fulfillment, deployed recovery/retention drills and integrated
+  pilot/release evidence. No deployment or certification is claimed.
 
-## Upstream reference
-
-[Distributed Audio Engine implementation evidence](https://github.com/neophilism/Distributed-Audio-Engine/blob/main/docs/implementation-status.md).
-
-## Monitoring contract
-
-Automation should publish a build SHA, test status, deployment state and timestamp, and mark unavailable upstream/security/hardware evidence as **unknown** or **pending**, never **passed**.
+The canonical registry restores the dependency edges, scope and acceptance text
+from the approved 120-package source plan. Empty dependency arrays in older
+registry exports must not be interpreted as permission to skip prerequisites.
+Independent expert review remains honestly pending and deferred under AGENTS.md;
+it is not a software merge prerequisite.

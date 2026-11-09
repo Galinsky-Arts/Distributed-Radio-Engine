@@ -5,6 +5,29 @@
 **DRE-17 price contract:** [versioned gentle/exponential reward ladder](docs/reward-price-ladder.md)
 supports unbounded mathematical tiers, exact bounded quotes, symbolic fallback
 and creator-approved immutable prices. It does not authorize a spend.
+**DRE-16 wallet boundary:** [durable scoped point accounting](docs/point-ledger.md)
+uses authenticated receipt consumption, atomic balances/audit, constrained
+reversals and concurrent-spend protection. Real producer integration and release
+acceptance remain separate from software fixtures.
+**DRE-15 completion gate:** [authenticated durable vesting receipts](docs/vesting-receipts.md)
+bind the matching outro and persist unique occurrence decisions across restarts
+and concurrent processes. Wallet settlement remains explicitly pending.
+**DRE-14 preview contract:** [authenticated provisional progress](docs/provisional-progress.md)
+uses a scoped producer verifier, nonoverlapping exact windows and terminal
+interruption tombstones. It never creates spendable point credit.
+**DRE-13 evidence contract:** [scope-bound physical-output adjudication](docs/speaker-evidence.md).
+The one-argument status-flag prototype is replaced by an explicit authenticated
+verifier boundary with deduplication/overlap checks. Software fixtures do not
+constitute calibrated-device evidence or authorize spendable point grants.
+**DRE-12 contribution software:** [policy, exact units and authenticated evidence
+boundary](docs/contribution-policy.md). Integer conservative energy equivalents
+remain provisional; real playback/evidence integration and later settlement gates
+are separate. `npm run check` exercises the fixture-based software acceptance.
+**DRE-11 SDK work:** [linear-radio playback facade](docs/radio-playback-sdk.md)
+provides transport-neutral web/native lifecycle adapters, current-station joins,
+bounded ciphertext backpressure and recovery. `npm run check` exercises software
+fixtures; actual DRE-10 station/endpoint integration remains pending. The SDK does
+not establish keys, implement a new encryption protocol or certify live playback.
 
 # Four-project development plan
 
