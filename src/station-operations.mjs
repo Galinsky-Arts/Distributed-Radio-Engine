@@ -46,12 +46,34 @@ function sanitizeSchedule(rotation, stationId, verifyEditorialApproval, station)
     if (timeline[0].fromMs !== 0 || timeline.at(-1).toMs !== program.durationMs ||
         timeline.some((cue, i) => i > 0 && cue.fromMs !== timeline[i - 1].toMs))
       throw new ContractError('Timeline must be contiguous and complete');
+    const completions = (program.completions ?? []).map(row => {
+      const occurrenceId = integer(row?.occurrenceId, 'completed occurrence', 1);
+      const vestNotBeforeMs = integer(row?.vestNotBeforeMs, 'outro completion', 1);
+      if (!timeline.some(cue => cue.role === 'closing' && cue.occurrenceId === occurrenceId && cue.toMs === vestNotBeforeMs))
+        throw new ContractError('Completion requires its exact closing identification');
+      return Object.freeze({occurrenceId, vestNotBeforeMs});
+    });
+    if (completions.length > timeline.length || new Set(completions.map(row => row.occurrenceId)).size !== completions.length)
+      throw new ContractError('Duplicate or excessive completions');
+    const opportunities = (program.opportunities ?? []).map(row => {
+      const marker = Object.freeze({id:id(row?.id, 'transition marker'),
+        atMs:integer(row?.atMs, 'transition time'),afterOccurrence:integer(row?.afterOccurrence, 'transition occurrence', 1)});
+      const completion = completions.find(item => item.occurrenceId === marker.afterOccurrence);
+      const nextIntro = completion && timeline.find(cue => cue.role === 'opening' && cue.fromMs >= completion.vestNotBeforeMs);
+      if (!completion || marker.atMs < completion.vestNotBeforeMs || marker.atMs > (nextIntro?.fromMs ?? program.durationMs))
+        throw new ContractError('Transition outside shared outro/intro boundary');
+      return marker;
+    });
+    if (opportunities.length > completions.length || new Set(opportunities.map(row => row.id)).size !== opportunities.length ||
+        new Set(opportunities.map(row => row.afterOccurrence)).size !== opportunities.length)
+      throw new ContractError('Duplicate or excessive transition markers');
     const safeProgram = Object.freeze({
       stationId,
       version: program.version,
       digest: program.digest,
       durationMs: integer(program.durationMs, 'program duration', 1),
-      timeline: Object.freeze(timeline)
+      timeline: Object.freeze(timeline),
+      completions: Object.freeze(completions), opportunities: Object.freeze(opportunities)
     });
     return Object.freeze({ effectiveAt: integer(effectiveAt, 'activation time'), program: safeProgram });
   });

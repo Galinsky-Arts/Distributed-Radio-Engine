@@ -65,3 +65,10 @@ cues now accept the compiler's null occurrence ID. Timeline gaps and overlaps
 are rejected before publication. No acoustic, device or deployed service
 evidence is inferred from these tests. Independent review remains deferred
 under AGENTS.md; development merge does not complete operational acceptance.
+
+DRE-20 integration retains only validated public completion times and shared
+transition markers in the durable schedule. These timing/occurrence identifiers
+are intentional public program metadata. Private manifests, approval proofs,
+media keys and arbitrary cue fields are still omitted. A real compiler-to-SQLite
+restart test verifies that a recovered schedule can project the same shared
+outro-to-intro opportunity without a broadcaster phone or per-listener insertion.

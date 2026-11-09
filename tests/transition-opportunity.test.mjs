@@ -78,3 +78,26 @@ test('untrusted malformed compiled boundaries do not pass a permissive test veri
  assert.throws(()=>verifiedStationTransition({...c,program:{...program,
    timeline:program.timeline.map((r,i)=>i===2?{...r,toMs:2999}:r)}}),/gap|closing/);
 });
+
+import {stageEncryptedRadioBroadcast,createSqliteStationOperationsStore} from '../src/station-operations.mjs';
+import {mkdtempSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
+test('compiled shared transition survives actual durable station publication and restart',()=>{
+ const dir=mkdtempSync(join(tmpdir(),'radio-transition-')),file=join(dir,'station.sqlite');let store;
+ try {
+  const revision=compileEditorialRevision({tenantId:'t',applicationId:'app',stationId:'radio',version:1,
+   program:[{kind:'identification',ref:'intro'},{kind:'media',ref:'song'},
+    {kind:'identification',ref:'outro'},{kind:'marker',ref:'shared'}]});
+  const compiled=compileRadioProgram({revision,approval:{digest:revision.digest,stationId:'radio',version:1},
+   durations:{intro:1000,song:1000,outro:1000},verifyPublishingRight:()=>true});
+  const prepared=stageEncryptedRadioBroadcast({station:{id:'radio',tenantId:'t',publisherId:'creator',name:'Radio',status:'active'},
+   rotation:{stationId:'radio',blocks:[{effectiveAt:10000,program:compiled}]},
+   assets:['intro','song','outro'].map(ref=>({tenantId:'t',stationId:'radio',segmentRef:ref,assetRef:'ciphertext:'+ref,ciphertextSha256:'sha256:'+'a'.repeat(64)})),
+   verifyEditorialApproval:()=>true,verifyCiphertextAvailable:()=>true});
+  store=createSqliteStationOperationsStore(file);store.publish(prepared,{expectedRevision:0,atMs:10000});store.close();
+  store=createSqliteStationOperationsStore(file);const lease=store.claim({stationId:'radio',workerId:'worker',atMs:11000,ttlMs:1000});
+  const recovered=store.read({stationId:'radio',workerId:'worker',fencingToken:lease.fencingToken,atMs:11001});
+  const result=verifiedStationTransition({program:recovered.schedule.blocks[0].program,cycle:1,
+   completedOccurrenceId:1,stationStartedAtMs:10000,verifyProgram:p=>p.digest===compiled.digest});
+  assert.equal(result.atMs,16000);assert.equal(result.eligible,true);
+ }finally{store?.close();rmSync(dir,{recursive:true,force:true});}
+});
