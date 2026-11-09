@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 1,
-  "observedAt": "2026-11-09T22:20:01Z",
+  "observedAt": "2026-11-09T22:22:49Z",
   "units": [
     {
       "id": "DRE-01",
@@ -495,15 +495,15 @@
       "number": 18,
       "title": "DRE-11: Radio join and playback SDK facade",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/18",
-      "state": "open",
+      "state": "closed",
       "draft": false,
       "createdAt": "2026-10-18T21:30:50Z",
-      "updatedAt": "2026-11-09T22:19:50Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "2087649705b434e3c01b87c9ba8dd1fb20cd0c3d",
+      "updatedAt": "2026-11-09T22:21:07Z",
+      "closedAt": "2026-11-09T22:21:07Z",
+      "mergedAt": "2026-11-09T22:21:07Z",
+      "headSha": "79e9cb919813769a79f9a8bdabbe560a10f48ab8",
       "baseRef": "main",
-      "mergeCommitSha": "08220f8dfc91596039391b529f42019b921ac293"
+      "mergeCommitSha": "5d21bb692d8c2a25adc53c23ec183a6fe013e9fb"
     },
     {
       "id": 4890541583,
