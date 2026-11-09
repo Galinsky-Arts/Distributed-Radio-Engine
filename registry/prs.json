@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 3,
-  "observedAt": "2026-11-09T23:54:45Z",
+  "observedAt": "2026-11-09T23:56:05Z",
   "units": [
     {
       "id": "DRE-01",
@@ -440,7 +440,9 @@
       "id": "DRE-26",
       "title": "E2EESA security, privacy and recovery",
       "origin": "addition",
-      "prs": [],
+      "prs": [
+        35
+      ],
       "dependsOn": [
         "DRE-10",
         "DRE-13",
@@ -488,19 +490,34 @@
   ],
   "pullRequests": [
     {
+      "id": 5233195352,
+      "number": 35,
+      "title": "DRE-26: harden station recovery and record radio security flow evidence",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/35",
+      "state": "open",
+      "draft": false,
+      "createdAt": "2026-11-09T23:55:12Z",
+      "updatedAt": "2026-11-09T23:55:12Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "0e28f5b249599405cbb95062c9dacb49b93d49aa",
+      "baseRef": "main",
+      "mergeCommitSha": null
+    },
+    {
       "id": 5233178465,
       "number": 34,
       "title": "Integrate sandbox Stripe Checkout for complete-work purchases",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/34",
-      "state": "open",
+      "state": "closed",
       "draft": false,
       "createdAt": "2026-11-09T23:53:29Z",
-      "updatedAt": "2026-11-09T23:53:29Z",
-      "closedAt": null,
-      "mergedAt": null,
+      "updatedAt": "2026-11-09T23:55:11Z",
+      "closedAt": "2026-11-09T23:55:11Z",
+      "mergedAt": "2026-11-09T23:55:11Z",
       "headSha": "2a312564b66d61783a3c106219d65a76c91b5138",
       "baseRef": "main",
-      "mergeCommitSha": "0a1353b913b73f65724968cd933a6ef318a14e66"
+      "mergeCommitSha": "a1a5b48f794377003c617a56da810eee4038b578"
     },
     {
       "id": 5232707622,
