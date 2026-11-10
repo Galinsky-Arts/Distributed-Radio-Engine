@@ -1,17 +1,7 @@
-# Implementation and evidence status
+# Radio implementation and evidence — November 10, 2026
 
-The first fourteen implementation/hardening PRs are merged. They cover thirteen roadmap IDs: DAE-01 through DAE-07, DAE-24, DAE-25, DAE-27, DAE-28, DAE-33 and DAE-34. DAE-33 also includes hardening PR #14. All 57 portable tests pass; source/boundary, strict typecheck, roadmap DAG and build checks pass. GitHub PR CI was checked at each exact head before merging.
+This repository implements neutral radio identity/catalog/rights/editorial/program contracts, ciphertext station persistence and playback facades, authenticated contribution/output boundaries, provisional progress, durable outro vesting and creator wallets, actual atomic point redemption, unbounded reward pricing, separate Groove catalogs, shared transition opportunities, rarity/completion/grant/delivery boundaries, complete-work commerce and scoped verified reporting. Versioned Groove catalog/stock/station policy publication and authorized reveal checkpoints are atomic and durable.
 
-| Area | Current scope | Outstanding evidence or integration |
-|---|---|---|
-| Encryption | Endpoint AES-GCM chunks, private manifests, integrity/context and size checks | Authenticated parent key channel, range streaming, independent crypto review |
-| Controls | Endpoint signatures, scope, atomic replay interface, leases and emergency supersession | Durable checkpoint store, E2EE control payload integration, native output enforcement |
-| Identity | Tenant/app policy evaluator and root-authorized device event chain | Provider provisioning, root/hardware storage, recovery and real agreement protocol |
-| Ingestion | Resumable ciphertext-only orchestrator, quota/digest/expiry checks | Durable state/storage adapters and deployed cleanup/restore drills |
-| Rights | Explicit layers, uses, validity, territory and revocation | Authorized record provisioning, confidential persistence and production review |
-| Media | RIFF/WAVE PCM/float32 parsing, PCM16 encoding, exact frames, digital peak/RMS, fresh-key renditions | Compressed/extended codecs, integrated loudness analysis and native sinks |
-| Timing | Common sample clock, current-position joins and transition markers | Device clock discipline, Bluetooth output measurements and acoustic qualification |
-| Spatial | Scene contracts, mono mixtures, bounded source/speaker gains, fixed/object tracking | Resampling, topology choreography, actual positioning hardware and field pilots |
-| Acoustic harness | Short-capture latency and trial report calculations | Real reference captures, source attribution, calibrated levels and independent assessment |
+The full suite has 282 passing tests against the actual DAE build, including real SQLite restart/process races, actual DAE checkout/entitlements, official Stripe SDK raw-webhook signatures and music/documentary ciphertext chunk authentication. Tests use explicit fixture identity/rights, issuer, transport and provider callbacks where no real service is configured. They never establish actual speaker output, actual key enrollment, a real Stripe account or a deployed pilot.
 
-No service is deployed by these merges. No physical speaker trial, independent release review or production certification has been performed. SceneSignal, Distributed Radio Engine and TrackZero currently receive specifications and plans; application implementation follows the requested build order.
+DRE-26 has partial source-bound flow review and concrete private recovery-file hardening. It is not a complete standard assessment. DRE-27 has mixed-content software fixtures; deployed/physical pilot evidence remains absent. DRE-28 stable reusable release is pending actual endpoint/native/provider and recovery qualification. External human review is deferred by owner policy and is not the reason for these remaining gates. See RELEASE_READINESS.md and security/e2eesa-status.json for distinct implementation/testing/review claims.

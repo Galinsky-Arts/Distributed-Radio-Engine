@@ -3,8 +3,7 @@
 **Development and handoff plan:** [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md).
 
 **DRE-19 checkpoint:** [shared recording-channel registry and remaining work](docs/groove-catalog-checkpoint.md).
-Channel identities persist atomically; catalog/grant/delivery integration remains
-incomplete. Unimplemented grant APIs fail closed; this draft is not deployable.
+Channel identity, issuer and delivery boundaries, atomic configuration and durable grants are implemented; real endpoint/provider setup remains pending. See current implementation status below.
 **DRE-17 price contract:** [versioned gentle/exponential reward ladder](docs/reward-price-ladder.md)
 supports unbounded mathematical tiers, exact bounded quotes, symbolic fallback
 and creator-approved immutable prices. It does not authorize a spend.
@@ -14,7 +13,7 @@ reversals and concurrent-spend protection. Real producer integration and release
 acceptance remain separate from software fixtures.
 **DRE-15 completion gate:** [authenticated durable vesting receipts](docs/vesting-receipts.md)
 bind the matching outro and persist unique occurrence decisions across restarts
-and concurrent processes. Wallet settlement remains explicitly pending.
+and concurrent processes. Actual wallet settlement composition is covered by tests; producer deployment remains pending.
 **DRE-14 preview contract:** [authenticated provisional progress](docs/provisional-progress.md)
 uses a scoped producer verifier, nonoverlapping exact windows and terminal
 interruption tombstones. It never creates spendable point credit.
@@ -46,7 +45,7 @@ A **Spime** is a Bluetooth-enabled physical instrument anchor in SceneSignal: it
 
 All projects adopt the pinned End To End Everywhere architecture as their default. TLS and server disk encryption supplement endpoint encryption; they never substitute for it. Production assurance, native-device and field qualification are evidence gates distinct from merging development code.
 
-Implementation begins after the preceding stage. [Development plan](docs/distributed-radio-engine-development-plan.md).
+Current implemented slices and unresolved production integrations: [implementation status](docs/implementation-status.md) and [release readiness](docs/RELEASE_READINESS.md).
 
 ## End-to-End Everywhere progress
 

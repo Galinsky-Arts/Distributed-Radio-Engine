@@ -89,3 +89,10 @@ test('settled fulfillment cannot silently reassign a recording to another creato
  await assert.rejects(f.commerce.settle(new Uint8Array([1]),'fixture-auth'),/paid recording identity/);
  assert.equal(f.ledger.access(f.buyer,'one','download',1500).allowed,false);
 });
+
+for(const kind of ['complete-show','complete-documentary'])test('neutral whole-work settlement supports '+kind,options,async t=>{
+ const f=await fixture(t);f.changeWork({...f.work,kind});const pending=await f.commerce.startCheckout(f.input);
+ await f.prepareSettlement(pending.checkoutId);const settled=await f.commerce.settle(new Uint8Array([1]),'fixture-auth');
+ assert.equal(settled.state,'COMPLETE');assert.equal(f.ledger.access(f.buyer,'one','download',1500).allowed,true);
+ assert.equal(f.ledger.access(f.buyer,'two','download',1500).allowed,true);assert.equal(f.ledger.access(f.buyer,'one','stream',1500).allowed,false);
+});

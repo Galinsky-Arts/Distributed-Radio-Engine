@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 3,
-  "observedAt": "2026-11-09T23:56:05Z",
+  "observedAt": "2026-11-10T00:09:25Z",
   "units": [
     {
       "id": "DRE-01",
@@ -490,19 +490,34 @@
   ],
   "pullRequests": [
     {
+      "id": 5233249439,
+      "number": 36,
+      "title": "Atomically publish Groove catalog, stock and station policy",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/36",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-11-10T00:00:28Z",
+      "updatedAt": "2026-11-10T00:05:16Z",
+      "closedAt": "2026-11-10T00:03:40Z",
+      "mergedAt": "2026-11-10T00:03:40Z",
+      "headSha": "cb2db1061cf75cd3a442f20c2be89ec0e86235b9",
+      "baseRef": "main",
+      "mergeCommitSha": "b1d8cd7a9b42f5150a1bae49192c44ec058ea781"
+    },
+    {
       "id": 5233195352,
       "number": 35,
       "title": "DRE-26: harden station recovery and record radio security flow evidence",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/35",
-      "state": "open",
+      "state": "closed",
       "draft": false,
       "createdAt": "2026-11-09T23:55:12Z",
-      "updatedAt": "2026-11-09T23:55:12Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "0e28f5b249599405cbb95062c9dacb49b93d49aa",
+      "updatedAt": "2026-11-09T23:57:08Z",
+      "closedAt": "2026-11-09T23:57:08Z",
+      "mergedAt": "2026-11-09T23:57:08Z",
+      "headSha": "4279900d9a9afb6dd2bffafcb3fa9cd645c609cf",
       "baseRef": "main",
-      "mergeCommitSha": null
+      "mergeCommitSha": "811ff6e9a619bf438350b576b9214d821cd4c33d"
     },
     {
       "id": 5233178465,
