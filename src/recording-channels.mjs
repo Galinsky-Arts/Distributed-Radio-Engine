@@ -256,6 +256,22 @@ export class RecordingChannelRegistry {
       this.#db.exec('COMMIT');return result;
     }catch(error){try{this.#db.exec('ROLLBACK');}catch{}throw error;}
   }
+  /** One authorized consumer reveal per granted listener opportunity, durable across tabs/restarts. */
+  claimGrooveReveal(input,authorize) {
+    const safe={};for(const key of ['tenantId','applicationId','stationId','listenerId','opportunityId'])safe[key]=id(input?.[key],key);
+    if(typeof authorize!=='function')throw new TypeError('Authenticated reveal authorizer required');
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const result=this.readGrooveOpportunity(safe)?.result;
+      if(!result||result.state!=='granted'||!result.grant)throw new RangeError('Granted Groove opportunity required');
+      const allowed=authorize(Object.freeze({...safe,grantId:result.grant.grantId}));
+      if(allowed&&typeof allowed.then==='function'){Promise.resolve(allowed).catch(()=>{});throw new RangeError('Synchronous reveal authorization required');}
+      if(allowed!==true)throw new RangeError('Reveal authorization denied');
+      this.#db.exec('CREATE TABLE IF NOT EXISTS radio_groove_reveals(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,station_id TEXT NOT NULL,listener_id TEXT NOT NULL,opportunity_id TEXT NOT NULL,PRIMARY KEY(tenant_id,application_id,station_id,listener_id,opportunity_id)) STRICT');
+      const created=this.#db.prepare('INSERT OR IGNORE INTO radio_groove_reveals VALUES(?,?,?,?,?)').run(safe.tenantId,safe.applicationId,safe.stationId,safe.listenerId,safe.opportunityId).changes===1;
+      this.#db.exec('COMMIT');return created;
+    }catch(error){if(this.#db.isTransaction)this.#db.exec('ROLLBACK');throw error;}
+  }
   readGrooveGrant({tenantId,applicationId,listenerId,grantId}) {
     for(const value of [tenantId,applicationId,listenerId,grantId])id(value,'grant scope');
     const row=this.#db.prepare('SELECT * FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND listener_id=? AND grant_id=?').get(tenantId,applicationId,listenerId,grantId);

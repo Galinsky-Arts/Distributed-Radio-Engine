@@ -88,3 +88,15 @@ test('four independent listener processes compete for one Groove entitlement wit
  assert.equal(results.filter(x=>x.state==='stock-exhausted').length,3);
  assert.equal(listeners.reduce((sum,listenerId)=>sum+f.registry.readGrooveEntitlements({...f.scope,listenerId}).length,0),1);
 });
+
+test('reveal checkpoint is authorized and durable, and cannot precede an actual grant',t=>{
+ const f=setup(t),input={...f.scope,opportunityId:f.opportunity.opportunityId};
+ assert.throws(()=>f.registry.claimGrooveReveal(input,()=>true),/Granted/);
+ f.history.complete(f.completion);claim(f);
+ assert.throws(()=>f.registry.claimGrooveReveal(input,()=>false),/authorization/);
+ assert.throws(()=>f.registry.claimGrooveReveal(input,async()=>true),/Synchronous/);
+ assert.equal(f.registry.claimGrooveReveal(input,()=>true),true);
+ const reopened=new RecordingChannelRegistry(f.path);t.after(()=>reopened.close());
+ assert.equal(reopened.claimGrooveReveal(input,()=>true),false);
+ assert.throws(()=>reopened.claimGrooveReveal({...input,listenerId:'other'},()=>true),/Granted/);
+});
