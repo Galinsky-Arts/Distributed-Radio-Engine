@@ -1,0 +1,7 @@
+# Atomic Groove configuration
+
+The authorized creator endpoint calls RecordingChannelRegistry.publishGrooveConfiguration with version, expectedPreviousVersion, operationId, station/creator scope, DRE cadence/rarity policy and a separate bonus recording list. The mandatory synchronous authorizer must bind explicit transaction approval and recheck current creator ownership and recording rights for the entire normalized command. It runs before mutation and again before commit; async callbacks fail closed.
+
+Policy, permanent recording channel reservations, active catalog entries, stock and operation receipt commit in one SQLite transaction. A late channel/identity/stock conflict rolls back the entire change. Exact operation retries survive restart; changed input, stale versions, creator reassignment and stock below issued entitlements fail. Withdrawn entries retain their immutable identity and existing grants. Removing an item from one station policy does not revoke its catalog entry or previously issued entitlements. Authorized issuers must consume the current approved station policy, not infer eligibility from the entire catalog.
+
+Configuration contains necessary endpoint business metadata, never media bytes, keys or private manifest content. Relays must not be given this creator authority. Tests cover actual restart, conflict rollback, revoked/async authorization, stale versions and issued-stock invariants. They do not establish production identity or hardware qualification.
