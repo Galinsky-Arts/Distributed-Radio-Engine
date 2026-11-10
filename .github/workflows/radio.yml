@@ -25,6 +25,8 @@ jobs:
       - run: npm run build
         working-directory: .deps/audio-core
       - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=high
+      - run: python3 scripts/check-current-secrets.py
       - run: npm run check
         env:
           AUDIO_ENGINE_MODULE: ${{ github.workspace }}/.deps/audio-core/dist/src/index.js
