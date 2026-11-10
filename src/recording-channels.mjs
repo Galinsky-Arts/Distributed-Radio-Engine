@@ -2,6 +2,8 @@ import {DatabaseSync} from 'node:sqlite';
 import {openSync,closeSync,statSync,lstatSync} from 'node:fs';
 import {dirname,isAbsolute} from 'node:path';
 import {id,assertObject} from './contracts.mjs';
+import {eligibleRarityWeights} from './rarity-policy.mjs';
+import {transitionOpportunity} from './transition-opportunity.mjs';
 
 /** Shared atomic ownership across Groove/points/paid catalogs at one endpoint.
  * Internal persistence only: caller must authenticate creator rights first.
@@ -164,6 +166,57 @@ export class RecordingChannelRegistry {
       this.#db.exec('COMMIT');return Object.freeze({capacity,issued,remaining:capacity-issued});
     }catch(error){try{this.#db.exec('ROLLBACK');}catch{}throw error;}
   }
+  /** Atomic creator endpoint configuration; public relays cannot call this authority. */
+  publishGrooveConfiguration(input,authorize) {
+    const scope={};for(const key of ['tenantId','applicationId','creatorId','stationId','operationId'])scope[key]=id(input?.[key],key);
+    if(scope.operationId.length<20||typeof authorize!=='function'||!Number.isSafeInteger(input.version)||input.version<1||
+      input.expectedPreviousVersion!==input.version-1||!Array.isArray(input.recordings)||input.recordings.length<1||input.recordings.length>32||
+      !Number.isSafeInteger(input.rarityBase)||input.rarityBase<2||input.rarityBase>100)throw new RangeError('Invalid versioned Groove configuration');
+    const recordings=input.recordings.map(item=>{
+      if(!item||Object.keys(item).sort().join(',')!=='channel,exclusive,grooveId,minimumCompletions,recordingId,stock'||item.channel!=='groove'||item.exclusive!==true||
+        !Number.isSafeInteger(item.stock)||item.stock<0||item.stock>1000000||!Number.isSafeInteger(item.minimumCompletions)||item.minimumCompletions<0)
+        throw new RangeError('Separate bounded Groove catalog required');
+      return {grooveId:id(item.grooveId,'groove'),recordingId:id(item.recordingId,'recording'),minimumCompletions:item.minimumCompletions,stock:item.stock,exclusive:true,channel:'groove'};
+    });
+    if(new Set(recordings.map(x=>x.grooveId)).size!==recordings.length||new Set(recordings.map(x=>x.recordingId)).size!==recordings.length)throw new RangeError('Duplicate bonus recording identity');
+    eligibleRarityWeights({minimumCompletions:recordings.map(x=>x.minimumCompletions),completed:Number.MAX_SAFE_INTEGER,base:BigInt(input.rarityBase)});
+    transitionOpportunity({stationId:scope.stationId,programVersion:input.version,completedItems:0,everyMin:input.everyMin,everyMax:input.everyMax,sequence:0});
+    const command=Object.freeze({...scope,version:input.version,everyMin:input.everyMin,everyMax:input.everyMax,rarityBase:input.rarityBase,
+      recordings:Object.freeze(recordings.map(Object.freeze))}),binding=JSON.stringify(command);
+    const allow=()=>{try{const result=authorize(command);if(result&&typeof result.then==='function'){Promise.resolve(result).catch(()=>{});return false;}return result===true;}catch{return false;}};
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      this.#db.exec('CREATE TABLE IF NOT EXISTS radio_groove_configs(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,station_id TEXT NOT NULL,creator_id TEXT NOT NULL,version INTEGER NOT NULL,configuration TEXT NOT NULL,PRIMARY KEY(tenant_id,application_id,station_id)) STRICT');
+      this.#db.exec('CREATE TABLE IF NOT EXISTS radio_groove_config_operations(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,creator_id TEXT NOT NULL,operation_id TEXT NOT NULL,binding TEXT NOT NULL,PRIMARY KEY(tenant_id,application_id,creator_id,operation_id)) STRICT');
+      if(!allow())throw new RangeError('Groove configuration authorization denied');
+      const previous=this.#db.prepare('SELECT binding FROM radio_groove_config_operations WHERE tenant_id=? AND application_id=? AND creator_id=? AND operation_id=?').get(scope.tenantId,scope.applicationId,scope.creatorId,scope.operationId);
+      if(previous){if(previous.binding!==binding)throw new RangeError('Groove configuration operation conflict');this.#db.exec('COMMIT');return Object.freeze({...scope,version:input.version,committed:true});}
+      const old=this.#db.prepare('SELECT creator_id,version FROM radio_groove_configs WHERE tenant_id=? AND application_id=? AND station_id=?').get(scope.tenantId,scope.applicationId,scope.stationId);
+      if((old?.version??0)!==input.expectedPreviousVersion||(old&&old.creator_id!==scope.creatorId))throw new RangeError('Stale Groove configuration version or creator');
+      for(const item of recordings){
+        const reserved=this.get({...scope,recordingId:item.recordingId});
+        if(reserved&&(reserved.channel!=='groove'||reserved.entryId!==item.grooveId||reserved.creatorId!==scope.creatorId))throw new RangeError('Recording channel conflict');
+        const current=this.getGroove({...scope,grooveId:item.grooveId});
+        if(current&&(current.recordingId!==item.recordingId||current.creatorId!==scope.creatorId))throw new RangeError('Immutable Groove identity conflict');
+        const issued=this.#db.prepare('SELECT COUNT(*) AS n FROM radio_groove_grants WHERE tenant_id=? AND application_id=? AND groove_id=?').get(scope.tenantId,scope.applicationId,item.grooveId).n;
+        if(item.stock<issued)throw new RangeError('Stock below issued entitlements');
+        if(!reserved)this.#db.prepare('INSERT INTO radio_recording_channels VALUES(?,?,?,?,?,?)').run(scope.tenantId,scope.applicationId,item.recordingId,scope.creatorId,'groove',item.grooveId);
+        if(!current)this.#db.prepare('INSERT INTO radio_groove_publications VALUES(?,?,?,?,?,1,1)').run(scope.tenantId,scope.applicationId,item.grooveId,item.recordingId,scope.creatorId);
+        else if(!current.active)this.#db.prepare('UPDATE radio_groove_publications SET revision=revision+1,active=1 WHERE tenant_id=? AND application_id=? AND groove_id=?').run(scope.tenantId,scope.applicationId,item.grooveId);
+        this.#db.prepare('INSERT INTO radio_groove_stock VALUES(?,?,?,?,?) ON CONFLICT(tenant_id,application_id,groove_id) DO UPDATE SET capacity=excluded.capacity,issued=excluded.issued').run(scope.tenantId,scope.applicationId,item.grooveId,item.stock,issued);
+      }
+      if(!allow())throw new RangeError('Groove configuration authorization revoked');
+      this.#db.prepare('INSERT INTO radio_groove_configs VALUES(?,?,?,?,?,?) ON CONFLICT(tenant_id,application_id,station_id) DO UPDATE SET version=excluded.version,configuration=excluded.configuration').run(scope.tenantId,scope.applicationId,scope.stationId,scope.creatorId,input.version,binding);
+      this.#db.prepare('INSERT INTO radio_groove_config_operations VALUES(?,?,?,?,?)').run(scope.tenantId,scope.applicationId,scope.creatorId,scope.operationId,binding);
+      this.#db.exec('COMMIT');return Object.freeze({...scope,version:input.version,committed:true});
+    }catch(error){if(this.#db.isTransaction)this.#db.exec('ROLLBACK');throw error;}
+  }
+  readGrooveConfiguration({tenantId,applicationId,stationId}) {
+    for(const value of [tenantId,applicationId,stationId])id(value,'configuration scope');
+    if(!this.#db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='radio_groove_configs'").get())return null;
+    const row=this.#db.prepare('SELECT configuration FROM radio_groove_configs WHERE tenant_id=? AND application_id=? AND station_id=?').get(tenantId,applicationId,stationId);
+    return row?Object.freeze(JSON.parse(row.configuration)):null;
+  }
   readGrooveOpportunity({tenantId,applicationId,stationId,listenerId,opportunityId}) {
     const params=[tenantId,applicationId,stationId,listenerId,opportunityId];for(const value of params)id(value,'opportunity scope');
     const row=this.#db.prepare('SELECT binding,result_json FROM radio_groove_opportunities WHERE tenant_id=? AND application_id=? AND station_id=? AND listener_id=? AND opportunity_id=?').get(...params);
@@ -202,6 +255,22 @@ export class RecordingChannelRegistry {
       this.#db.prepare('INSERT INTO radio_groove_opportunities VALUES(?,?,?,?,?,?,?)').run(tenantId,applicationId,stationId,listenerId,opportunityId,binding,JSON.stringify(result));
       this.#db.exec('COMMIT');return result;
     }catch(error){try{this.#db.exec('ROLLBACK');}catch{}throw error;}
+  }
+  /** One authorized consumer reveal per granted listener opportunity, durable across tabs/restarts. */
+  claimGrooveReveal(input,authorize) {
+    const safe={};for(const key of ['tenantId','applicationId','stationId','listenerId','opportunityId'])safe[key]=id(input?.[key],key);
+    if(typeof authorize!=='function')throw new TypeError('Authenticated reveal authorizer required');
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const result=this.readGrooveOpportunity(safe)?.result;
+      if(!result||result.state!=='granted'||!result.grant)throw new RangeError('Granted Groove opportunity required');
+      const allowed=authorize(Object.freeze({...safe,grantId:result.grant.grantId}));
+      if(allowed&&typeof allowed.then==='function'){Promise.resolve(allowed).catch(()=>{});throw new RangeError('Synchronous reveal authorization required');}
+      if(allowed!==true)throw new RangeError('Reveal authorization denied');
+      this.#db.exec('CREATE TABLE IF NOT EXISTS radio_groove_reveals(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,station_id TEXT NOT NULL,listener_id TEXT NOT NULL,opportunity_id TEXT NOT NULL,PRIMARY KEY(tenant_id,application_id,station_id,listener_id,opportunity_id)) STRICT');
+      const created=this.#db.prepare('INSERT OR IGNORE INTO radio_groove_reveals VALUES(?,?,?,?,?)').run(safe.tenantId,safe.applicationId,safe.stationId,safe.listenerId,safe.opportunityId).changes===1;
+      this.#db.exec('COMMIT');return created;
+    }catch(error){if(this.#db.isTransaction)this.#db.exec('ROLLBACK');throw error;}
   }
   readGrooveGrant({tenantId,applicationId,listenerId,grantId}) {
     for(const value of [tenantId,applicationId,listenerId,grantId])id(value,'grant scope');
