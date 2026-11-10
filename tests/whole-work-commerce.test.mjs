@@ -18,18 +18,18 @@ async function fixture(t){
   requests.push(request);return {providerId:'fixture-provider',merchantAccountId:'account',providerPaymentId:'payment:'+request.checkoutId,currency:request.currency,amountMinor:request.amountMinor};
  }};
  const verifier={verify:async(_raw,auth)=>{if(auth!=='fixture-auth'||!event)throw Error('provider verification failed');return structuredClone(event);}};
- let checkoutStore,entitlementStore,engine,ledger,commerce;
+ let checkoutStore,entitlementStore,engine,ledger,commerce,commerceOptions;
  const open=()=>{
   checkoutStore=new node.SqliteCommerceStore(path);entitlementStore=new node.SqliteEntitlementStore(path);
   engine=new core.CheckoutEngine(coreScope,rights,provider,verifier,checkoutStore);ledger=new core.EntitlementLedger(coreScope,entitlementStore);
-  commerce=new WholeWorkCommerce({scope,recordingRegistry:registry,checkout:engine,entitlements:ledger,commerceDigest:core.commerceDigest,
+  commerceOptions={scope,recordingRegistry:registry,checkout:engine,entitlements:ledger,commerceDigest:core.commerceDigest,
    resolveCompleteWork:async()=>work,verifyCompleteWork:async()=>true,resolveBuyer:async actor=>({...buyer,identityId:actor.principalId}),
    resolveMerchant:async()=>manager,authorizePurchase:async(_request,proof)=>allow&&proof==='fixture-consent',
-   authorizeRead:async()=>true,verifyFulfillment:async()=>fulfillment,territory:'US',now:()=>now});
+   authorizeRead:async()=>true,verifyFulfillment:async()=>fulfillment,territory:'US',now:()=>now};commerce=new WholeWorkCommerce(commerceOptions);
  };
  open();t.after(()=>{checkoutStore.close();entitlementStore.close();});
  const input={tenantId:'tenant',applicationId:'app',principalId:'buyer',productId:'album',productRevision:1,operationId:'operation-000000000000000001',proof:'fixture-consent'};
- return {input,requests,registry,get commerce(){return commerce},get ledger(){return ledger},buyer,
+ return {input,requests,registry,forApplication:applicationId=>new WholeWorkCommerce({...commerceOptions,scope:{...scope,applicationId}}),get commerce(){return commerce},get ledger(){return ledger},buyer,
   changeWork:change=>{work=change},get work(){return structuredClone(work)},deny:()=>{allow=false},
   pauseFulfillment:()=>{fulfillment=false},resumeFulfillment:()=>{fulfillment=true},
   async prepareSettlement(checkoutId){
@@ -95,4 +95,14 @@ for(const kind of ['complete-show','complete-documentary'])test('neutral whole-w
  await f.prepareSettlement(pending.checkoutId);const settled=await f.commerce.settle(new Uint8Array([1]),'fixture-auth');
  assert.equal(settled.state,'COMPLETE');assert.equal(f.ledger.access(f.buyer,'one','download',1500).allowed,true);
  assert.equal(f.ledger.access(f.buyer,'two','download',1500).allowed,true);assert.equal(f.ledger.access(f.buyer,'one','stream',1500).allowed,false);
+});
+
+test('shared merchant/core storage cannot expose or fulfill an order through another application',options,async t=>{
+ const f=await fixture(t),pending=await f.commerce.startCheckout(f.input),other=f.forApplication('other-app');
+ const input={...f.input,applicationId:'other-app',checkoutId:pending.checkoutId};
+ assert.equal(await other.getReceipt(input),null);await f.prepareSettlement(pending.checkoutId);
+ await assert.rejects(other.settle(new Uint8Array([1]),'fixture-auth'),/application binding/);
+ assert.equal(f.ledger.access(f.buyer,'one','download',1500).allowed,false);
+ assert.equal((await f.commerce.getReceipt({...f.input,checkoutId:pending.checkoutId})).state,'COMPLETE');
+ f.reopen();assert.equal(await f.forApplication('other-app').getReceipt(input),null);
 });

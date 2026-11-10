@@ -217,6 +217,26 @@ export class RecordingChannelRegistry {
     const row=this.#db.prepare('SELECT configuration FROM radio_groove_configs WHERE tenant_id=? AND application_id=? AND station_id=?').get(tenantId,applicationId,stationId);
     return row?Object.freeze(JSON.parse(row.configuration)):null;
   }
+  /** Durable application namespace for generic core checkout orders. */
+  reserveCommerceCheckout(input) {
+    const record={};for(const key of ['tenantId','applicationId','merchantId','principalId','checkoutId','productId'])record[key]=id(input?.[key],key);
+    if(!Number.isSafeInteger(input.productRevision)||input.productRevision<1)throw new RangeError('Checkout product revision required');
+    record.productRevision=input.productRevision;
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      this.#db.exec('CREATE TABLE IF NOT EXISTS radio_commerce_checkouts(tenant_id TEXT NOT NULL,application_id TEXT NOT NULL,checkout_id TEXT NOT NULL,record_json TEXT NOT NULL CHECK(json_valid(record_json)),PRIMARY KEY(tenant_id,checkout_id)) STRICT');
+      const old=this.#db.prepare('SELECT record_json FROM radio_commerce_checkouts WHERE tenant_id=? AND checkout_id=?').get(record.tenantId,record.checkoutId);
+      if(old&&old.record_json!==JSON.stringify(record))throw new RangeError('Immutable commerce application binding conflict');
+      if(!old)this.#db.prepare('INSERT INTO radio_commerce_checkouts VALUES(?,?,?,?)').run(record.tenantId,record.applicationId,record.checkoutId,JSON.stringify(record));
+      this.#db.exec('COMMIT');return Object.freeze(record);
+    }catch(error){if(this.#db.isTransaction)this.#db.exec('ROLLBACK');throw error;}
+  }
+  readCommerceCheckout({tenantId,applicationId,checkoutId}) {
+    for(const value of [tenantId,applicationId,checkoutId])id(value,'checkout application scope');
+    if(!this.#db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='radio_commerce_checkouts'").get())return null;
+    const row=this.#db.prepare('SELECT record_json FROM radio_commerce_checkouts WHERE tenant_id=? AND application_id=? AND checkout_id=?').get(tenantId,applicationId,checkoutId);
+    return row?Object.freeze(JSON.parse(row.record_json)):null;
+  }
   readGrooveOpportunity({tenantId,applicationId,stationId,listenerId,opportunityId}) {
     const params=[tenantId,applicationId,stationId,listenerId,opportunityId];for(const value of params)id(value,'opportunity scope');
     const row=this.#db.prepare('SELECT binding,result_json FROM radio_groove_opportunities WHERE tenant_id=? AND application_id=? AND station_id=? AND listener_id=? AND opportunity_id=?').get(...params);

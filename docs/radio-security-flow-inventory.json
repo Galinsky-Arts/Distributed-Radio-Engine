@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "partial-source-review-not-standard-assessment",
-  "reviewedAt": "2026-11-09",
+  "reviewedAt": "2026-11-10",
   "reviewMethod": "AI-assisted source review plus automated adversarial/integration tests",
   "productStandardPin": "dea8f54cab9130da86a71f36de553766a978daf2",
   "developmentTrackingPin": "8441335f359c6e446f9bfe8b959f9606ce341409",
@@ -73,7 +73,7 @@
       "sourceFiles": [
         {
           "path": "src/whole-work-commerce.mjs",
-          "sha256": "682ec5e9df6110a2fa497baaf92fe0a544c9a7d7352f644e6e6ce69d124422e9",
+          "sha256": "25d6b13c207851e6df46a857a57fcf5e2714df0750e9507a1e8c855a24923c6d",
           "present": true
         }
       ],
@@ -97,6 +97,11 @@
       "finding": "public scheduler recovery database could be externally mutable",
       "resolution": "require owner-private ordinary file and directory; deny symlink and implicit memory storage",
       "tests": "tests/station-operations.test.mjs"
+    },
+    {
+      "finding": "generic core checkout scope did not durably distinguish consumer applications",
+      "resolution": "immutable DRE application/buyer/product binding required for order projection and fulfillment",
+      "tests": "tests/whole-work-commerce.test.mjs"
     }
   ],
   "completeStandardAssessment": false,

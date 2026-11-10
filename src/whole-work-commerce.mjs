@@ -11,7 +11,7 @@ export class WholeWorkCommerce{
   resolveBuyer,resolveMerchant,authorizePurchase,authorizeRead,verifyFulfillment,recordingRegistry,presentPendingOrder=null,paymentOrigins=[],territory,now=Date.now}={}){
   this.#scope=Object.freeze({tenantId:id(scope?.tenantId,'tenant'),applicationId:id(scope?.applicationId,'application'),merchantId:id(scope?.merchantId,'merchant')});
   if(!['createCheckout','readOrder','registerProduct','settle'].every(k=>typeof checkout?.[k]==='function')||
-   typeof entitlements?.grant!=='function'||typeof recordingRegistry?.reserve!=='function'||typeof recordingRegistry?.get!=='function'||![commerceDigest,resolveCompleteWork,verifyCompleteWork,resolveBuyer,resolveMerchant,
+   typeof recordingRegistry?.reserveCommerceCheckout!=='function'||typeof recordingRegistry?.readCommerceCheckout!=='function'||typeof entitlements?.grant!=='function'||typeof recordingRegistry?.reserve!=='function'||typeof recordingRegistry?.get!=='function'||![commerceDigest,resolveCompleteWork,verifyCompleteWork,resolveBuyer,resolveMerchant,
     authorizePurchase,authorizeRead,verifyFulfillment,now].every(fn=>typeof fn==='function')||!/^[A-Z]{2}$/.test(territory))
    throw new TypeError('DAE checkout/entitlement, complete-work, identity and transaction adapters required');
   if((presentPendingOrder!==null&&typeof presentPendingOrder!=='function')||!Array.isArray(paymentOrigins)||paymentOrigins.length>8)throw new TypeError('Approved payment presentation origins required');
@@ -64,6 +64,8 @@ export class WholeWorkCommerce{
   return {work,digest};
  }
  #boundOrder(order,buyerId){
+  const binding=order&&this.#registry.readCommerceCheckout({...this.#scope,checkoutId:order.checkoutId});
+  if(!binding||binding.merchantId!==this.#scope.merchantId||binding.principalId!==buyerId||binding.productId!==order.productId||binding.productRevision!==order.productRevision)throw new RangeError('Checkout application binding mismatch');
   if(!order||order.scope?.tenantId!==this.#coreScope.tenantId||order.scope?.application!==this.#coreScope.application||
    order.scope?.identityId!==this.#coreScope.identityId||order.buyerId!==buyerId||!['reserved','pending','settled'].includes(order.status))
    throw new RangeError('Checkout response binding mismatch');
@@ -113,12 +115,14 @@ export class WholeWorkCommerce{
    amountMinor:previous?.amountMinor??work.product.priceMinor,currency:Object.freeze({...previous?.currency??work.product.currency})});
   if(await this.#approve(approval,input.proof)!==true)throw new RangeError('Purchase transaction not authorized');
   if(previous&&previous.status!=='reserved')return this.#receipt(previous);
+  this.#registry.reserveCommerceCheckout({...this.#scope,principalId:actor.principalId,checkoutId,productId,productRevision:input.productRevision});
   const order=await this.#checkout.createCheckout(buyer,{checkoutId,productId,productRevision:input.productRevision,territory:this.#territory},this.#time());
   this.#boundOrder(order,actor.principalId);return this.#receipt(order);
  }
  async getReceipt(input){
   const actor=this.#identity(input),checkoutId=id(input.checkoutId,'checkoutId');
   if(await this.#read(actor,checkoutId)!==true)throw new RangeError('Receipt read denied');
+  if(!this.#registry.readCommerceCheckout({...this.#scope,checkoutId}))return null;
   const order=this.#checkout.readOrder(await this.#actor(actor),checkoutId,this.#time());
   if(!order)return null;this.#boundOrder(order,actor.principalId);return this.#receipt(order);
  }
