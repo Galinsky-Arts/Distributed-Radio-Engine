@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 3,
-  "observedAt": "2026-11-10T00:09:25Z",
+  "observedAt": "2026-11-10T00:13:44Z",
   "units": [
     {
       "id": "DRE-01",
@@ -459,7 +459,9 @@
       "id": "DRE-27",
       "title": "Mixed-content and radio integration pilot",
       "origin": "addition",
-      "prs": [],
+      "prs": [
+        37
+      ],
       "dependsOn": [
         "DRE-18",
         "DRE-23",
@@ -489,6 +491,36 @@
     }
   ],
   "pullRequests": [
+    {
+      "id": 5233383660,
+      "number": 38,
+      "title": "Isolate commerce receipts and fulfillment between radio applications",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/38",
+      "state": "open",
+      "draft": false,
+      "createdAt": "2026-11-10T00:12:51Z",
+      "updatedAt": "2026-11-10T00:13:19Z",
+      "closedAt": null,
+      "mergedAt": null,
+      "headSha": "de06f39c55da1ebd4f70e52f85bf44cf1fb8af4f",
+      "baseRef": "main",
+      "mergeCommitSha": null
+    },
+    {
+      "id": 5233355213,
+      "number": 37,
+      "title": "DRE-27: verify mixed-content integration and document stable-release readiness",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/37",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-11-10T00:10:06Z",
+      "updatedAt": "2026-11-10T00:12:32Z",
+      "closedAt": "2026-11-10T00:12:32Z",
+      "mergedAt": "2026-11-10T00:12:32Z",
+      "headSha": "94b2c8a011f7d52f6d116a444740a858a5b9361f",
+      "baseRef": "main",
+      "mergeCommitSha": "2fa85195ae410868bfb3536bdfd847e55413ee05"
+    },
     {
       "id": 5233249439,
       "number": 36,
