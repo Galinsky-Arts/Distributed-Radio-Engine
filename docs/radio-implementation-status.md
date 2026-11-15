@@ -8,8 +8,8 @@ a [developer kit and support matrix](developer-kit.md), a [changelog](../CHANGEL
 and `tests/release-contract.test.mjs`, which enforces no consumer-application
 dependency or branding, a non-production readiness surface and a pre-release
 version string. The package is `0.1.0-rc.1`; it is a release candidate, not a
-stable or production release. The suite has 287 passing cases against the
-pinned audio engine. Operational gates in RELEASE_READINESS.md are unchanged.
+stable or production release. The suite has 289 passing cases (0 skipped) against
+the actual audio engine build. Operational gates in RELEASE_READINESS.md are unchanged.
 
 November 9, 2026 software checkpoint. Live GitHub PRs and their exact tested
 heads are authoritative; `registry/prs.json` records dated observations.

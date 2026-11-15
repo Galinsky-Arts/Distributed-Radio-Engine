@@ -9,8 +9,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Complete radio contract and regression suite
-          command: npm run check
+          name: Complete radio contract and regression suite (builds the pinned Audio Engine; never skips DAE suites)
+          command: npm ci --ignore-scripts && npm run check
+          environment:
+            DRE_BUILD_AUDIO_ENGINE: "1"
+            DRE_REQUIRE_AUDIO_ENGINE: "1"
       - run:
           name: Independent roadmap validity check
           command: node scripts/check-roadmap.mjs

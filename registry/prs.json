@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 3,
-  "observedAt": "2026-11-10T00:13:44Z",
+  "observedAt": "2026-11-15T18:27:57.000Z",
   "units": [
     {
       "id": "DRE-01",
@@ -415,7 +415,10 @@
       "externalPrerequisites": [],
       "scope": "Whole albums for music and complete show/documentary works for nonmusic; optional tips/gifts, splits and provider adapters.",
       "acceptance": "Paid standalone music singles remain unsupported; purchases never require speaker participation.",
-      "gate": "Software"
+      "gate": "Software",
+      "contributingPrs": [
+        38
+      ]
     },
     {
       "id": "DRE-25",
@@ -487,24 +490,42 @@
       "externalPrerequisites": [],
       "scope": "Native consumer contracts, developer kit, support matrix, independent security review and release evidence.",
       "acceptance": "No TrackZero dependency or branding in engine; unresolved assurance gates block production claim.",
-      "gate": "Software"
+      "gate": "Software",
+      "contributingPrs": [
+        39
+      ]
     }
   ],
   "pullRequests": [
+    {
+      "id": 5317729391,
+      "number": 39,
+      "title": "DRE-28: lock consumer API and record 0.1.0-rc.1 release contract",
+      "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/39",
+      "state": "closed",
+      "draft": false,
+      "createdAt": "2026-11-15T00:15:15Z",
+      "updatedAt": "2026-11-15T00:16:02Z",
+      "closedAt": "2026-11-15T00:16:01Z",
+      "mergedAt": "2026-11-15T00:16:01Z",
+      "headSha": "f378e73f6d4818c3e9c4f2966bc403fa8f88df00",
+      "baseRef": "main",
+      "mergeCommitSha": "f7b8456f5c13fe96869ddd9dfa23856d25c30113"
+    },
     {
       "id": 5233383660,
       "number": 38,
       "title": "Isolate commerce receipts and fulfillment between radio applications",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/38",
-      "state": "open",
+      "state": "closed",
       "draft": false,
       "createdAt": "2026-11-10T00:12:51Z",
-      "updatedAt": "2026-11-10T00:13:19Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "de06f39c55da1ebd4f70e52f85bf44cf1fb8af4f",
+      "updatedAt": "2026-11-10T00:16:18Z",
+      "closedAt": "2026-11-10T00:16:18Z",
+      "mergedAt": "2026-11-10T00:16:18Z",
+      "headSha": "ac68066b76bdb94b5964bc2d0892c345d5d1c2a9",
       "baseRef": "main",
-      "mergeCommitSha": null
+      "mergeCommitSha": "9f13bae59fa36cc7d004a03d52d711f9e3fe8b71"
     },
     {
       "id": 5233355213,
