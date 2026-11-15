@@ -10,7 +10,7 @@
 // Without an engine, DRE_REQUIRE_AUDIO_ENGINE=1 fails; otherwise the run
 // continues and prints exactly which suites were skipped and why.
 import {spawnSync} from 'node:child_process';
-import {existsSync, readFileSync, readdirSync} from 'node:fs';
+import {existsSync, readFileSync, readdirSync, rmSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -45,8 +45,11 @@ function buildPinnedEngine() {
   const revision = pinnedEngineRevision(readFileSync(join(root, '.github', 'workflows', 'radio.yml'), 'utf8'));
   if (!revision) throw new Error('No pinned Distributed-Audio-Engine revision in .github/workflows/radio.yml');
   const dir = join(root, '.deps', 'audio-core');
+  // A build cache can restore a partial directory without git metadata; start clean.
+  if (existsSync(dir) && !existsSync(join(dir, '.git'))) rmSync(dir, {recursive: true, force: true});
   if (!existsSync(join(dir, '.git'))) run('git', ['clone', '--filter=blob:none', '--no-checkout',
     'https://github.com/Galinsky-Arts/Distributed-Audio-Engine.git', dir]);
+  rmSync(join(dir, 'dist'), {recursive: true, force: true});
   run('git', ['-C', dir, 'fetch', '--depth=1', 'origin', revision]);
   run('git', ['-C', dir, 'checkout', '--detach', revision]);
   run('npm', ['ci', '--ignore-scripts'], {cwd: dir});
@@ -62,7 +65,11 @@ function headOf(dir) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   let engine = locateEngine();
-  if (!engine && process.env.DRE_BUILD_AUDIO_ENGINE === '1') engine = buildPinnedEngine();
+  if (process.env.DRE_BUILD_AUDIO_ENGINE === '1' && engine?.source !== 'environment') {
+    // Build mode always tests the exact pin, never a cached or sibling build of another revision.
+    const pinned = pinnedEngineRevision(readFileSync(join(root, '.github', 'workflows', 'radio.yml'), 'utf8'));
+    if (!engine || engine.dir !== join(root, '.deps', 'audio-core') || headOf(engine.dir) !== pinned) engine = buildPinnedEngine();
+  }
   const env = {...process.env};
   if (engine) {
     env.AUDIO_ENGINE_MODULE = engine.path;
