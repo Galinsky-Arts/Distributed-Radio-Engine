@@ -1,6 +1,6 @@
 # Reusable radio release readiness
 
-Development merges are authorized. The package remains 0.1.0-dev, private and unqualified for production. A stable version/publication is not implied by passing software fixtures.
+Development merges are authorized. The package is the 0.1.0-rc.1 release candidate, private and unqualified for production. A stable version/publication is not implied by passing software fixtures.
 
 | Contract | Implemented evidence | Remaining operational integration |
 |---|---|---|
@@ -18,7 +18,7 @@ For an operational pilot, provision actual endpoint enrollment/codecs, authorize
 
 ## DRE-28 developer and support procedure
 
-Build DAE at the pinned revision in .github/workflows/radio.yml (`npm ci --ignore-scripts; npm run build`), install this package with `npm ci --ignore-scripts`, set AUDIO_ENGINE_MODULE to the absolute dist/src/index.js, and run `npm run check`. RecordingChannelRegistry, point/vesting/schedule stores are authorized endpoint business storage; use owner-private persistent directories, do not share unsynchronized independent SQLite copies, and restore from a coherent backup with durable tombstones intact. Do not reset deduplication history as a recovery shortcut.
+Build DAE at the pinned revision in .github/workflows/radio.yml (`npm ci --ignore-scripts; npm run build`), install this package with `npm ci --ignore-scripts`, set AUDIO_ENGINE_MODULE to the absolute dist/src/index.js, and run `npm run check`. `scripts/run-tests.mjs` also finds `.deps/audio-core` or a sibling `../distributed-audio-engine` build, can build the pinned revision itself (`DRE_BUILD_AUDIO_ENGINE=1`), fails with `DRE_REQUIRE_AUDIO_ENGINE=1` (set in hosted CI and the Render build), and otherwise prints a warning naming the skipped DAE-backed suites. RecordingChannelRegistry, point/vesting/schedule stores are authorized endpoint business storage; use owner-private persistent directories, do not share unsynchronized independent SQLite copies, and restore from a coherent backup with durable tombstones intact. Do not reset deduplication history as a recovery shortcut.
 
 Pin exact consumer versions and native artifacts. The playback facade exposes only start/stop/recover/status; start resolves when its stream ends, while onStatus signals readiness. On uncertain identity, current rights, unavailable signature verification or cleanup failure, fail closed and stop issuing new rewards/purchases. Keep error output free of keys, payment URLs, ambient audio and private metadata. Inspect health with scoped authorization and a fresh trusted clock. A stable release needs deployed identity/key/provider validation, a real restore/replay drill, maintained dependency/secret gates and actual supported native/output evidence. External review remains honestly pending deferred work, not an inferred approval requirement.
 

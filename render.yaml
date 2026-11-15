@@ -1,0 +1,22 @@
+# Development status preview only: no database, media keys, Stripe or paid resources.
+# /healthz reports preview reachability; /readyz stays 503 (not broadcasting).
+services:
+  - type: web
+    name: distributed-radio-engine-preview
+    runtime: node
+    plan: free
+    region: virginia
+    branch: main
+    autoDeployTrigger: commit
+    buildCommand: npm ci --ignore-scripts && npm run check
+    startCommand: node preview-server.mjs
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 24.19.0
+      # Build and require the Audio Engine revision pinned in .github/workflows/radio.yml
+      # so DAE-backed suites run during the build instead of skipping.
+      - key: DRE_BUILD_AUDIO_ENGINE
+        value: "1"
+      - key: DRE_REQUIRE_AUDIO_ENGINE
+        value: "1"

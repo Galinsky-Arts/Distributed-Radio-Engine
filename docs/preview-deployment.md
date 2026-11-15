@@ -1,10 +1,14 @@
 # Render development preview
 
-Build command: `npm run check`.
+Blueprint: `render.yaml` (free web service `distributed-radio-engine-preview`, no database).
 
-Start command: `npm start`.
+Build command: `npm ci --ignore-scripts && npm run check`, with `DRE_BUILD_AUDIO_ENGINE=1`
+and `DRE_REQUIRE_AUDIO_ENGINE=1` so the build clones and builds the Audio Engine revision
+pinned in `.github/workflows/radio.yml` and fails rather than skipping DAE-backed suites.
 
-Runtime: Node.js >=22; default process listens on `0.0.0.0:$PORT`. No database, media keys, paid cloud tier or sensitive environment variables are needed for the preview.
+Start command: `node preview-server.mjs` (same as `npm start`). Health check: `/healthz`.
+
+Runtime: Node.js 24 (`NODE_VERSION=24.19.0`); default process listens on `0.0.0.0:$PORT`. No database, media keys, paid cloud tier or sensitive environment variables are needed for the preview.
 
 - `/healthz` returns 200 when this **preview server** is reachable. It does **not** mean radio broadcasting is active.
 - `/readyz` and `/api/readiness` return 503 until actual secure live-station prerequisites are met and independently verified.
