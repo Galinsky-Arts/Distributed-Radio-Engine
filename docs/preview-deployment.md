@@ -1,5 +1,15 @@
 # Render development preview
 
+## Deployment record — November 15, 2026
+
+Free Render web service `distributed-radio-engine-preview`
+(`srv-dbsvmupsrm7s739q64h0`, https://distributed-radio-engine-preview-btkp.onrender.com)
+in the Galinsky Arts workspace, no database. Deploy `dep-dbsvmv1srm7s739q65q0` of
+commit `b1d81c9` is live. The build cloned and built Audio Engine `c6fd5fa` and ran
+`npm run check`: 289 passed, 0 skipped. Render's `/healthz` probe passed. Auto-deploy
+follows `main` after GitHub checks pass. The preview reports status only; it does
+not broadcast, stream or award points, and `/readyz` stays 503.
+
 Blueprint: `render.yaml` (free web service `distributed-radio-engine-preview`, no database).
 
 Build command: `npm ci --ignore-scripts && npm run check`, with `DRE_BUILD_AUDIO_ENGINE=1`
