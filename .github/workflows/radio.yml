@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: Galinsky-Arts/Distributed-Audio-Engine
-          ref: feaf485beb25f25ce222b3bc7a57c09392cc57a6
+          ref: 6c5b21d6b8ca456f1e331a4370b8238448ea79d8
           path: .deps/audio-core
           persist-credentials: false
       - run: npm ci --ignore-scripts
