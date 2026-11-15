@@ -6,7 +6,7 @@ function send(res,status,body,type='application/json; charset=utf-8') {
  res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'"});
  res.end(body);
 }
-const repo='https://github.com/neophilism/Distributed-Radio-Engine';
+const repo='https://github.com/Galinsky-Arts/Distributed-Radio-Engine';
 export function createPreviewServer() {
  return createServer((req,res)=>{
   if(req.method!=='GET'&&req.method!=='HEAD')return send(res,405,JSON.stringify({error:'method_not_allowed'}));

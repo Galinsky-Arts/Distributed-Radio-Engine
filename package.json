@@ -1,6 +1,6 @@
 {
   "name": "@neophilism/distributed-radio-engine",
-  "version": "0.1.0-dev",
+  "version": "0.1.0-rc.1",
   "private": true,
   "type": "module",
   "description": "Neutral radio programming and publishing contracts; development stage",

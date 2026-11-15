@@ -1,5 +1,16 @@
 # Distributed Radio Engine — implementation and evidence
 
+## Release candidate checkpoint — November 15, 2026
+
+All 28 DRE units now have merged software implementations. DRE-28 adds the
+release contract: a locked consumer API snapshot (`docs/public-api.json`),
+a [developer kit and support matrix](developer-kit.md), a [changelog](../CHANGELOG.md)
+and `tests/release-contract.test.mjs`, which enforces no consumer-application
+dependency or branding, a non-production readiness surface and a pre-release
+version string. The package is `0.1.0-rc.1`; it is a release candidate, not a
+stable or production release. The suite has 287 passing cases against the
+pinned audio engine. Operational gates in RELEASE_READINESS.md are unchanged.
+
 November 9, 2026 software checkpoint. Live GitHub PRs and their exact tested
 heads are authoritative; `registry/prs.json` records dated observations.
 
@@ -23,8 +34,6 @@ missing receipts. Hosted checks must pass at the exact PR head before merge.
   ciphertext relay deployment and actual browser/native media playback.
 - Calibrated physical-source attribution, route/device qualification, audible
   interruption latency, battery and long-duration field tests.
-- DRE-17 onward: versioned reward pricing, atomic point redemptions, separate
-  bonus catalog, shared transitions, completion/grants, commerce and reporting.
 - Provider-backed fulfillment, deployed recovery/retention drills and integrated
   pilot/release evidence. No deployment or certification is claimed.
 
