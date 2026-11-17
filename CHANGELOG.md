@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — November 17, 2026
+
+- New optional `./postgres-durability` export: `createPostgresStoreDurability`
+  backs any of the SQLite stores (points, vesting, listener history, recording
+  channels, station operations) with PostgreSQL snapshots for hosts without a
+  persistent disk. SQLite stays the default and the query engine; the pool is
+  injected, so the package adds no runtime database dependency (`pg` is a
+  development dependency for the suite). Restore is digest-checked before any
+  store opens, writes are fenced by an ownership epoch, and a failed write is
+  reported and retried, never acknowledged.
+
 ## 0.1.0-rc.1 — November 15, 2026
 
 First release candidate of the reusable radio engine (DRE-28). **Not production

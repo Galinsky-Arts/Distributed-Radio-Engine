@@ -9,6 +9,16 @@ jobs:
     permissions:
       contents: read
     timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dre
+          POSTGRES_PASSWORD: dre
+          POSTGRES_DB: dre_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U dre" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,7 +27,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: Galinsky-Arts/Distributed-Audio-Engine
-          ref: c6fd5fa6c9a1a5cf3e8a3a72f60f515083661430
+          ref: 3032e46fa18d250bfbb03ef0abf2c6e98ca509d4
           path: .deps/audio-core
           persist-credentials: false
       - run: npm ci --ignore-scripts
@@ -31,3 +41,5 @@ jobs:
         env:
           AUDIO_ENGINE_MODULE: ${{ github.workspace }}/.deps/audio-core/dist/src/index.js
           DRE_REQUIRE_AUDIO_ENGINE: '1'
+          # Disposable CI service database for the PostgreSQL store-durability suite.
+          DRE_TEST_DATABASE_URL: postgres://dre:dre@localhost:5432/dre_test
