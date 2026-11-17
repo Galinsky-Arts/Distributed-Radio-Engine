@@ -1,5 +1,14 @@
 # Render development preview
 
+## Redeploy — November 17, 2026
+
+Auto-deploy `dep-dbts0rlg1s2s73eihv90` of commit `392b3d3` (optional PostgreSQL
+store durability) is live. The build built Audio Engine `3032e46` and ran
+`npm run check`: 290 passed, 4 skipped — the skipped cases are the PostgreSQL
+durability suite, because the preview has no database (it ran 5/5 in GitHub
+Actions against a PostgreSQL service and locally). The preview stays status-only
+and does not use the durability adapter.
+
 ## Deployment record — November 15, 2026
 
 Free Render web service `distributed-radio-engine-preview`

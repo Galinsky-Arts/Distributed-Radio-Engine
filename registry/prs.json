@@ -10,7 +10,7 @@
   "scopeNote": "Units filtered by this repository prefix from the multi-repository shared roadmap. Other repository units are not counted here.",
   "schemaVersion": 1,
   "roadmapVersion": 3,
-  "observedAt": "2026-11-17T02:46:16.000Z",
+  "observedAt": "2026-11-17T02:50:13.000Z",
   "units": [
     {
       "id": "DRE-01",
@@ -1087,15 +1087,15 @@
       "number": 43,
       "title": "Add optional PostgreSQL durability for the SQLite stores",
       "url": "https://github.com/Galinsky-Arts/Distributed-Radio-Engine/pull/43",
-      "state": "open",
+      "state": "closed",
       "draft": false,
       "createdAt": "2026-11-17T02:45:14Z",
-      "updatedAt": "2026-11-17T02:45:14Z",
-      "closedAt": null,
-      "mergedAt": null,
-      "headSha": "eb5a204e0e288f9c61fdbd73f2af49912c887c1c",
+      "updatedAt": "2026-11-17T02:47:29Z",
+      "closedAt": "2026-11-17T02:47:29Z",
+      "mergedAt": "2026-11-17T02:47:29Z",
+      "headSha": "b2ec26d492a84361aaa5a1d0f91f958140c3200e",
       "baseRef": "main",
-      "mergeCommitSha": "a868ad234a537542586a1c465f759789722d33c4"
+      "mergeCommitSha": "392b3d3e0ac93ac328407809f0f942f4656ce5a5"
     }
   ]
 }
