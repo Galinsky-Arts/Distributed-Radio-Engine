@@ -13,6 +13,7 @@
     "./join": "./src/radio-join.mjs",
     "./vesting-store": "./src/sqlite-vesting-store.mjs",
     "./point-store": "./src/sqlite-point-store.mjs",
+    "./postgres-durability": "./src/postgres-store-durability.mjs",
     "./reward-prices": "./src/reward-ladder.mjs",
     "./recording-channels": "./src/recording-channels.mjs",
     "./stripe": "./src/stripe-checkout.mjs"
@@ -25,5 +26,8 @@
   "license": "UNLICENSED",
   "dependencies": {
     "stripe": "23.1.0"
+  },
+  "devDependencies": {
+    "pg": "8.23.1"
   }
 }
